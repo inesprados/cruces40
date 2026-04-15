@@ -1,771 +1,211 @@
-/* ── Estado ── */
 const state = {
-  camareros: ['Ana', 'Carlos', 'María', 'Paco', 'Lucía'],
+  camareros: ['Ana', 'Carlos', 'María'],
   platos: [
-    { nombre: 'Montadito', seccion: 'cocina' },
+    { nombre: 'Montadito', seccion: 'plancha' },
     { nombre: 'Croquetas', seccion: 'cocina' },
-    { nombre: 'Salmorejo', seccion: 'cocina' },
-    { nombre: 'Bravas', seccion: 'plancha' },
-    { nombre: 'Tortilla', seccion: 'plancha' },
-    { nombre: 'Pulpo', seccion: 'plancha' },
+    { nombre: 'Tapa jamón', seccion: 'plancha' }
   ],
+  ingredientes: [], // { id, nombre, unidad, stockInicial, stockActual, consumos: {nombrePlato: valor} }
   cola: [],
-  cantidades: {},
   contador: 1,
-  seccionActiva: 'cocina',
-  platoActivo: null,
-  ingredientes: [], // [{ id, nombre, unidad, stockInicial, stockActual, umbral, consumos:{nombrePlato: fraccion} }]
-  _ingEditId: null,
+  catActiva: 'plancha',
+  _editIngId: null
 };
 
-/* ── Cookies ── */
-function setCookie(name, value) {
-  const date = new Date();
-  date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
-  document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
-}
-function getCookie(name) {
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i].trim();
-    if (c.indexOf(nameEQ) === 0) {
-      try { return JSON.parse(decodeURIComponent(c.substring(nameEQ.length))); }
-      catch (e) { return null; }
-    }
-  }
-  return null;
-}
+/* --- COOKIES --- */
 function guardar() {
-  setCookie('comandas_cruz_v3', {
-    camareros: state.camareros,
-    platos: state.platos,
-    cola: state.cola,
-    cantidades: state.cantidades,
-    contador: state.contador,
-    ingredientes: state.ingredientes,
-  });
+  const d = new Date(); d.setTime(d.getTime() + (7*24*60*60*1000));
+  document.cookie = `comandas_pro_v5=${encodeURIComponent(JSON.stringify(state))};expires=${d.toUTCString()};path=/;SameSite=Lax`;
 }
+
 function cargar() {
-  const datos = getCookie('comandas_cruz_v3');
-  if (datos) {
-    if (datos.camareros) state.camareros = datos.camareros;
-    if (datos.platos) state.platos = datos.platos;
-    if (datos.cola) state.cola = datos.cola;
-    if (datos.cantidades) state.cantidades = datos.cantidades;
-    if (datos.contador) state.contador = datos.contador;
-    if (datos.ingredientes) state.ingredientes = datos.ingredientes;
+  const name = "comandas_pro_v5=";
+  const ca = document.cookie.split(';');
+  for(let i=0; i<ca.length; i++) {
+    let c = ca[i].trim();
+    if(c.indexOf(name) == 0) {
+      try { Object.assign(state, JSON.parse(decodeURIComponent(c.substring(name.length)))); } catch(e){}
+    }
   }
 }
 
-/* ── Swipe to delete ── */
-function addSwipeToDelete(el, onDelete) {
-  let startX = null, startY = null, dx = 0, swiping = false;
-  function pointerDown(e) {
-    const t = e.touches ? e.touches[0] : e;
-    startX = t.clientX; startY = t.clientY; dx = 0; swiping = false;
-    el.style.transition = 'none';
-  }
-  function pointerMove(e) {
-    if (startX === null) return;
-    const t = e.touches ? e.touches[0] : e;
-    dx = t.clientX - startX;
-    const dy = t.clientY - startY;
-    if (!swiping && Math.abs(dy) > Math.abs(dx)) { startX = null; return; }
-    swiping = true;
-    if (dx < 0) {
-      el.style.transform = `translateX(${dx}px)`;
-      el.style.opacity = Math.max(0, 1 + dx / 120);
-      if (e.cancelable) e.preventDefault();
-    }
-  }
-  function pointerUp() {
-    if (startX === null) return;
-    startX = null;
-    if (dx < -60) {
-      el.style.transition = 'transform 0.2s ease, opacity 0.2s ease, max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease';
-      el.style.transform = 'translateX(-100%)';
-      el.style.opacity = '0';
-      el.style.overflow = 'hidden';
-      setTimeout(() => { el.style.maxHeight = '0'; el.style.padding = '0'; el.style.marginTop = '0'; }, 150);
-      setTimeout(onDelete, 400);
-    } else {
-      el.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-      el.style.transform = 'translateX(0)';
-      el.style.opacity = '1';
-    }
-  }
-  el.addEventListener('touchstart', pointerDown, { passive: true });
-  el.addEventListener('touchmove', pointerMove, { passive: false });
-  el.addEventListener('touchend', pointerUp);
-  el.addEventListener('mousedown', pointerDown);
-  window.addEventListener('mousemove', pointerMove);
-  window.addEventListener('mouseup', pointerUp);
-}
-
-/* ── Camareros horizontal ── */
-function renderCamarerosDrag() {
-  const lista = document.getElementById('lista-camareros-drag');
-  lista.innerHTML = '';
-  state.camareros.forEach(nombre => {
+/* --- RENDER COMANDAS --- */
+function renderCamareros() {
+  const cont = document.getElementById('lista-camareros-drag');
+  cont.innerHTML = '';
+  state.camareros.forEach(c => {
     const el = document.createElement('div');
-    el.className = 'camarero-chip';
+    el.className = 'camarero-card';
     el.draggable = true;
-    el.textContent = nombre;
-    el.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', nombre);
-      el.classList.add('dragging');
-    });
-    el.addEventListener('dragend', () => el.classList.remove('dragging'));
-    lista.appendChild(el);
+    el.textContent = c;
+    el.ondragstart = (e) => e.dataTransfer.setData('text', c);
+    cont.appendChild(el);
   });
 }
 
-/* ── Render sección ── */
-function renderSeccion() {
-  // Actualizar badge contadores en subtabs
-  ['cocina', 'plancha'].forEach(sec => {
-    const total = state.cola.filter(p => {
-      const plato = state.platos.find(pl => pl.nombre === p.plato);
-      return plato && plato.seccion === sec && !p.entregada;
-    }).length;
-    const badgeEl = document.getElementById(`subtab-badge-${sec}`);
-    if (badgeEl) { badgeEl.textContent = total; badgeEl.style.display = total > 0 ? 'inline-block' : 'none'; }
-  });
+function renderPlatos() {
+  const cont = document.getElementById('lista-platos-drop');
+  cont.innerHTML = '';
+  document.getElementById('nombre-cat-actual').textContent = state.catActiva;
 
-  const lista = document.getElementById('lista-platos-drop');
-  lista.innerHTML = '';
-  const platosSeccion = state.platos.filter(p => p.seccion === state.seccionActiva);
-
-  if (platosSeccion.length === 0) {
-    lista.innerHTML = '<p style="opacity:0.4;text-align:center;padding:30px 0;font-size:14px;">Sin platos en esta sección.<br>Añade platos desde Configurar.</p>';
-    return;
-  }
-
-  platosSeccion.forEach(({ nombre }) => {
-    const zona = document.createElement('div');
-    zona.className = 'camarero-drop-zone';
-    zona.dataset.plato = nombre;
-
-    const header = document.createElement('div');
-    header.className = 'zona-header';
-
-    const titulo = document.createElement('div');
-    titulo.className = 'camarero-nombre';
-    titulo.textContent = nombre;
-
-    const pendientes = state.cola.filter(p => p.plato === nombre && !p.entregada).length;
-    const rightSide = document.createElement('div');
-    rightSide.style.cssText = 'display:flex;align-items:center;gap:8px;';
-
-    if (pendientes > 0) {
-      const badge = document.createElement('span');
-      badge.className = 'plato-tab-badge';
-      badge.textContent = pendientes;
-      rightSide.appendChild(badge);
-    }
-
-    const btnDetalle = document.createElement('button');
-    btnDetalle.className = 'btn-detalle';
-    btnDetalle.textContent = 'Ver detalle';
-    btnDetalle.addEventListener('click', (e) => { e.stopPropagation(); abrirDetallePlato(nombre); });
-    rightSide.appendChild(btnDetalle);
-
-    header.appendChild(titulo);
-    header.appendChild(rightSide);
-    zona.appendChild(header);
-
-    const pedidosCont = document.createElement('div');
-    pedidosCont.className = 'pedidos-list';
-    state.cola.filter(p => p.plato === nombre && !p.entregada).forEach(p => {
-      pedidosCont.appendChild(crearBadgePedido(p, false));
+  state.platos.filter(p => p.seccion === state.catActiva).forEach(p => {
+    const zone = document.createElement('div');
+    zone.className = 'plato-drop-zone';
+    zone.innerHTML = `<span class="plato-titulo">${p.nombre}</span><div class="pedidos-cont"></div>`;
+    
+    const pedidosCont = zone.querySelector('.pedidos-cont');
+    state.cola.filter(ped => ped.plato === p.nombre && !ped.entregada).forEach(ped => {
+      pedidosCont.innerHTML += `<div class="badge-pedido"><span>${ped.camarero}</span><small>#${ped.id}</small></div>`;
     });
-    zona.appendChild(pedidosCont);
 
-    zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('drag-over'); });
-    zona.addEventListener('dragleave', () => zona.classList.remove('drag-over'));
-    zona.addEventListener('drop', e => {
+    zone.ondragover = (e) => { e.preventDefault(); zone.classList.add('drag-over'); };
+    zone.ondragleave = () => zone.classList.remove('drag-over');
+    zone.ondrop = (e) => {
       e.preventDefault();
-      zona.classList.remove('drag-over');
-      const nombreCamarero = e.dataTransfer.getData('text/plain');
-      if (nombreCamarero) añadirPedido(nombre, nombreCamarero);
-    });
-
-    lista.appendChild(zona);
+      zone.classList.remove('drag-over');
+      const cam = e.dataTransfer.getData('text');
+      if(cam) nuevoPedido(p.nombre, cam);
+    };
+    cont.appendChild(zone);
   });
 }
 
-/* ── Badge pedido ── */
-function crearBadgePedido(p, grande) {
-  const badge = document.createElement('div');
-  badge.className = grande ? 'pedido-badge pedido-badge-grande' : 'pedido-badge';
-  badge.dataset.id = p.id;
-  badge.innerHTML = `
-    <span class="pedido-num">#${p.id}</span>
-    <span class="pedido-camarero">${p.camarero}</span>
-    <span class="pedido-hora">${p.hora}</span>
-    <span class="swipe-hint">← desliza</span>
-  `;
-  addSwipeToDelete(badge, () => {
-    state.cola = state.cola.filter(x => x.id !== p.id);
-    guardar();
-    actualizarTodo();
-    if (state.platoActivo) renderDetallePlato(state.platoActivo);
-  });
-  return badge;
-}
-
-/* ── Detalle plato ── */
-function abrirDetallePlato(plato) {
-  state.platoActivo = plato;
-  document.getElementById('detalle-titulo').textContent = plato;
-  renderDetallePlato(plato);
-  document.getElementById('panel-comandas').classList.remove('active');
-  document.getElementById('panel-detalle').classList.add('active');
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-}
-function renderDetallePlato(plato) {
-  const lista = document.getElementById('lista-detalle');
-  lista.innerHTML = '';
-  const pedidos = state.cola.filter(p => p.plato === plato && !p.entregada);
-  if (pedidos.length === 0) {
-    lista.innerHTML = '<p style="opacity:0.45;text-align:center;padding:30px 0;font-size:15px;">Sin pedidos pendientes</p>';
-    return;
-  }
-  pedidos.forEach(p => lista.appendChild(crearBadgePedido(p, true)));
-}
-function cerrarDetalle() {
-  state.platoActivo = null;
-  document.getElementById('panel-detalle').classList.remove('active');
-  document.getElementById('panel-comandas').classList.add('active');
-  document.querySelector('.tab[data-tab="comandas"]').classList.add('active');
-}
-document.getElementById('btn-volver').addEventListener('click', cerrarDetalle);
-
-/* ── Subtabs cocina/plancha ── */
-document.querySelectorAll('.subtab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.subtab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    state.seccionActiva = btn.dataset.seccion;
-    renderSeccion();
-  });
-});
-
-/* ── Añadir pedido ── */
-function añadirPedido(plato, camarero) {
-  const pedido = {
-    id: state.contador++,
-    plato,
-    camarero,
-    hora: new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-    entregada: false
-  };
-  state.cola.push(pedido);
-  state.cantidades[plato] = (state.cantidades[plato] || 0) + 1;
-  // Descontar stock de ingredientes
+function nuevoPedido(plato, camarero) {
+  const p = { id: state.contador++, plato, camarero, entregada: false, hora: new Date().toLocaleTimeString() };
+  state.cola.push(p);
+  // Descontar stock
   state.ingredientes.forEach(ing => {
-    const fraccion = ing.consumos && ing.consumos[plato];
-    if (fraccion && fraccion > 0) {
-      ing.stockActual = Math.max(0, (ing.stockActual || 0) - fraccion);
-    }
+    const gasto = ing.consumos[plato] || 0;
+    ing.stockActual = Math.max(0, ing.stockActual - gasto);
   });
   guardar();
-  actualizarTodo();
+  actualizarUI();
 }
 
-function actualizarTodo() {
-  actualizarStats();
-  renderSeccion();
-  if (document.getElementById('panel-cantidades').classList.contains('active')) renderCantidades();
-  if (document.getElementById('panel-avisos').classList.contains('active')) renderAvisos();
-  actualizarAvisosBadge();
+function actualizarUI() {
+  renderPlatos();
+  renderStock();
+  document.getElementById('stat-pendientes').textContent = state.cola.filter(p => !p.entregada).length;
 }
 
-function actualizarStats() {
-  const p = state.cola.filter(x => !x.entregada).length;
-  const l = state.cola.filter(x => x.entregada).length;
-  document.getElementById('stat-pendientes').textContent = `${p} pendientes`;
-  document.getElementById('stat-listos').textContent = `${l} listos`;
-}
-
-/* ── Cantidades ── */
-function renderCantidades() {
-  const cont = document.getElementById('lista-cantidades');
-  cont.innerHTML = '';
-
-  ['cocina', 'plancha'].forEach(sec => {
-    const platosGrupo = state.platos.filter(p => p.seccion === sec);
-    if (platosGrupo.length === 0) return;
-
-    const groupHeader = document.createElement('div');
-    groupHeader.className = `cantidad-group-header seccion-${sec}`;
-    groupHeader.textContent = sec.charAt(0).toUpperCase() + sec.slice(1);
-    cont.appendChild(groupHeader);
-
-    platosGrupo.forEach(({ nombre }) => {
-      const count = state.cantidades[nombre] || 0;
-      const row = document.createElement('div');
-      row.className = 'cantidad-row';
-
-      const nombreEl = document.createElement('span');
-      nombreEl.className = 'cantidad-nombre';
-      nombreEl.textContent = nombre;
-
-      const controls = document.createElement('div');
-      controls.className = 'cantidad-controls';
-
-      const btnMinus = document.createElement('button');
-      btnMinus.className = 'btn-count';
-      btnMinus.textContent = '−';
-      btnMinus.addEventListener('click', () => {
-        if ((state.cantidades[nombre] || 0) > 0) {
-          state.cantidades[nombre]--;
-          guardar(); renderCantidades();
-        }
-      });
-
-      const numEl = document.createElement('input');
-      numEl.type = 'number';
-      numEl.className = 'count-input';
-      numEl.value = count;
-      numEl.min = 0;
-      numEl.addEventListener('change', () => {
-        const v = parseInt(numEl.value);
-        state.cantidades[nombre] = isNaN(v) || v < 0 ? 0 : v;
-        numEl.value = state.cantidades[nombre];
-        guardar();
-      });
-
-      const btnPlus = document.createElement('button');
-      btnPlus.className = 'btn-count';
-      btnPlus.textContent = '+';
-      btnPlus.addEventListener('click', () => {
-        state.cantidades[nombre] = (state.cantidades[nombre] || 0) + 1;
-        guardar(); renderCantidades();
-      });
-
-      controls.appendChild(btnMinus);
-      controls.appendChild(numEl);
-      controls.appendChild(btnPlus);
-      row.appendChild(nombreEl);
-      row.appendChild(controls);
-      cont.appendChild(row);
-    });
-  });
-
-  const total = Object.values(state.cantidades).reduce((a, b) => a + b, 0);
-  const totalRow = document.createElement('div');
-  totalRow.className = 'cantidad-total';
-  totalRow.innerHTML = `<span>Total del día</span><span class="total-num">${total}</span>`;
-  cont.appendChild(totalRow);
-}
-
-document.getElementById('btn-reset-cantidades').addEventListener('click', () => {
-  if (confirm('¿Borrar todos los contadores del día?')) {
-    state.cantidades = {};
-    guardar(); renderCantidades();
-  }
-});
-
-/* ── Config ── */
-function renderConfig() {
-  const tagC = document.getElementById('tag-camareros');
-  const tagP = document.getElementById('tag-platos');
-  tagC.innerHTML = '';
-  tagP.innerHTML = '';
-
-  state.camareros.forEach(nombre => {
-    const tag = document.createElement('div');
-    tag.className = 'tag';
-    tag.innerHTML = `${nombre} <span class="tag-x">×</span>`;
-    tag.querySelector('.tag-x').addEventListener('click', () => {
-      state.camareros = state.camareros.filter(c => c !== nombre);
-      guardar(); renderCamarerosDrag(); renderConfig();
-    });
-    tagC.appendChild(tag);
-  });
-
-  state.platos.forEach(({ nombre, seccion }) => {
-    const tag = document.createElement('div');
-    tag.className = 'tag tag-plato';
-
-    const seccionSelect = document.createElement('select');
-    seccionSelect.className = 'tag-seccion-select';
-    ['cocina', 'plancha'].forEach(s => {
-      const opt = document.createElement('option');
-      opt.value = s;
-      opt.textContent = s.charAt(0).toUpperCase() + s.slice(1);
-      if (s === seccion) opt.selected = true;
-      seccionSelect.appendChild(opt);
-    });
-    seccionSelect.addEventListener('change', () => {
-      const plato = state.platos.find(p => p.nombre === nombre);
-      if (plato) plato.seccion = seccionSelect.value;
-      guardar(); renderSeccion(); renderConfig();
-    });
-
-    const nombreSpan = document.createElement('span');
-    nombreSpan.textContent = nombre;
-
-    const x = document.createElement('span');
-    x.className = 'tag-x';
-    x.textContent = '×';
-    x.addEventListener('click', () => {
-      state.platos = state.platos.filter(p => p.nombre !== nombre);
-      guardar(); renderSeccion(); renderConfig();
-    });
-
-    tag.appendChild(seccionSelect);
-    tag.appendChild(nombreSpan);
-    tag.appendChild(x);
-    tagP.appendChild(tag);
-  });
-}
-
-document.getElementById('btn-add-camarero').addEventListener('click', () => {
-  const inp = document.getElementById('inp-camarero');
-  const nombre = inp.value.trim();
-  if (nombre && !state.camareros.includes(nombre)) {
-    state.camareros.push(nombre);
-    guardar(); renderCamarerosDrag(); renderConfig(); inp.value = '';
-  }
-});
-document.getElementById('btn-add-plato').addEventListener('click', () => {
-  const inp = document.getElementById('inp-plato');
-  const sel = document.getElementById('sel-seccion-nueva');
-  const nombre = inp.value.trim();
-  if (nombre && !state.platos.find(p => p.nombre === nombre)) {
-    state.platos.push({ nombre, seccion: sel.value });
-    guardar(); renderSeccion(); renderConfig(); inp.value = '';
-  }
-});
-document.getElementById('inp-camarero').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-add-camarero').click(); });
-document.getElementById('inp-plato').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('btn-add-plato').click(); });
-
-/* ── Tabs principales ── */
-document.querySelectorAll('.tab').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab, .panel').forEach(el => el.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
-    state.platoActivo = null;
-    if (btn.dataset.tab === 'config') renderConfig();
-    if (btn.dataset.tab === 'cantidades') renderCantidades();
-    if (btn.dataset.tab === 'avisos') renderAvisos();
-  });
-});
-
-/* ── Avisos: badge pestaña ── */
-function actualizarAvisosBadge() {
-  const enAlerta = state.ingredientes.filter(ing => ing.stockActual <= ing.umbral).length;
-  const badge = document.getElementById('avisos-tab-badge');
-  if (badge) { badge.textContent = enAlerta; badge.style.display = enAlerta > 0 ? 'inline-block' : 'none'; }
-}
-
-/* ── Avisos: render panel ── */
-function renderAvisos() {
-  renderAlertasStock();
-  renderListaIngredientes();
-  actualizarAvisosBadge();
-}
-
-function renderAlertasStock() {
-  const cont = document.getElementById('avisos-alertas');
-  cont.innerHTML = '';
-  const enAlerta = state.ingredientes.filter(ing => ing.stockActual <= ing.umbral);
-  if (enAlerta.length === 0) {
-    cont.innerHTML = '<div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:14px;color:var(--green);font-weight:500;">✓ Todo el stock está en niveles correctos</div>';
-    return;
-  }
-  enAlerta.forEach(ing => {
-    const critico = ing.stockActual <= ing.umbral * 0.5;
-    const div = document.createElement('div');
-    div.className = `alerta-stock${critico ? ' critica' : ''}`;
-    div.innerHTML = `
-      <span class="alerta-icono">${critico ? '🚨' : '⚠️'}</span>
-      <span class="alerta-texto">
-        <strong>${ing.nombre}</strong> — quedan <span class="alerta-stock-val">${formatStock(ing.stockActual)} ${ing.unidad}</span>
-        ${critico ? '· <em>¡Stock crítico!</em>' : `(umbral: ${ing.umbral} ${ing.unidad})`}
-      </span>`;
-    cont.appendChild(div);
-  });
-}
-
-function formatStock(val) {
-  return Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
-}
-
-function renderListaIngredientes() {
+/* --- GESTIÓN STOCK --- */
+function renderStock() {
   const cont = document.getElementById('lista-ingredientes');
   cont.innerHTML = '';
-  if (state.ingredientes.length === 0) {
-    cont.innerHTML = '<p style="opacity:0.4;text-align:center;padding:30px 0;font-size:14px;">Sin ingredientes configurados.<br>Pulsa "+ Añadir ingrediente" para empezar.</p>';
-    return;
-  }
   state.ingredientes.forEach(ing => {
-    const pct = ing.stockInicial > 0 ? Math.max(0, Math.min(100, (ing.stockActual / ing.stockInicial) * 100)) : 0;
-    const enAlerta = ing.stockActual <= ing.umbral;
-    const critico = ing.stockActual <= ing.umbral * 0.5;
-    const colorBarra = critico ? 'roja' : enAlerta ? 'amarilla' : '';
-
-    const row = document.createElement('div');
-    row.className = `ingrediente-row${critico ? ' critico' : enAlerta ? ' alerta' : ''}`;
-
-    const consumosValidos = Object.entries(ing.consumos || {}).filter(([, v]) => v > 0);
-    const consumosHtml = consumosValidos.map(([plato, v]) =>
-      `<span class="consumo-chip">${plato}: ${formatStock(v)} ${ing.unidad}</span>`).join('');
-
-    row.innerHTML = `
-      <div class="ingrediente-top">
-        <span class="ingrediente-nombre">${ing.nombre} ${enAlerta ? (critico ? '🚨' : '⚠️') : ''}</span>
-        <div class="ingrediente-stock-display">
-          <span class="stock-num">${formatStock(ing.stockActual)}</span>
-          <span class="stock-unidad">${ing.unidad}</span>
-        </div>
+    const alert = ing.stockActual < (ing.stockInicial * 0.2);
+    const card = document.createElement('div');
+    card.className = `stock-card ${alert ? 'alert' : ''}`;
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:start">
+        <strong>${ing.nombre}</strong>
+        <button class="sub-tab" style="padding:2px 8px" onclick="editarIngrediente(${ing.id})">⚙</button>
       </div>
-      <div class="stock-barra-wrap"><div class="stock-barra ${colorBarra}" style="width:${pct}%"></div></div>
-      ${consumosValidos.length > 0 ? `<div class="ingrediente-consumos">${consumosHtml}</div>` : ''}
-      <div class="ingrediente-acciones">
-        <button class="btn-ing-edit" data-id="${ing.id}">✏️ Editar</button>
-        <button class="btn-stock-reset" data-id="${ing.id}">↺ Reponer stock</button>
-        <button class="btn-ing-del" data-id="${ing.id}">🗑 Eliminar</button>
-      </div>`;
-
-    row.querySelector('.btn-ing-edit').addEventListener('click', () => abrirModalIngrediente(ing.id));
-    row.querySelector('.btn-ing-del').addEventListener('click', () => {
-      if (confirm(`¿Eliminar ingrediente "${ing.nombre}"?`)) {
-        state.ingredientes = state.ingredientes.filter(i => i.id !== ing.id);
-        guardar(); renderAvisos();
-      }
-    });
-    row.querySelector('.btn-stock-reset').addEventListener('click', () => {
-      ing.stockActual = ing.stockInicial;
-      guardar(); renderAvisos();
-    });
-    cont.appendChild(row);
+      <div style="font-size: 20px; margin: 10px 0;">${ing.stockActual.toFixed(2)} / ${ing.stockInicial} <small>${ing.unit || 'uds'}</small></div>
+      <div style="height:8px; background:#eee; border-radius:4px; overflow:hidden">
+        <div style="width:${(ing.stockActual/ing.stockInicial)*100}%; height:100%; background:${alert?'var(--red)':'var(--green)'}"></div>
+      </div>
+    `;
+    cont.appendChild(card);
   });
 }
 
-/* ── Modal ingrediente ── */
-function abrirModalIngrediente(id) {
-  state._ingEditId = id || null;
-  const ing = id ? state.ingredientes.find(i => i.id === id) : null;
-  document.getElementById('inp-ing-nombre').value = ing ? ing.nombre : '';
-  document.getElementById('inp-ing-stock').value = ing ? ing.stockInicial : 0;
-  document.getElementById('inp-ing-unidad').value = ing ? ing.unidad : '';
-  document.getElementById('inp-ing-umbral').value = ing ? ing.umbral : 10;
-  renderModalConsumos(ing ? ing.consumos : {});
-  document.getElementById('modal-ingrediente').style.display = 'flex';
+/* --- MODAL --- */
+const modal = document.getElementById('modal-stock');
+document.getElementById('btn-nuevo-ingrediente').onclick = () => {
+  state._editIngId = null;
+  document.getElementById('mod-ing-nombre').value = '';
+  abrirModal();
+};
+
+function abrirModal() {
+  const listConsumos = document.getElementById('modal-consumos');
+  listConsumos.innerHTML = state.platos.map(p => `
+    <div class="consumo-edit-row" style="display:flex; justify-content:space-between; margin-bottom:5px">
+      <span style="font-size:12px">${p.nombre}</span>
+      <input type="number" step="0.001" class="add-input ing-cons" data-plato="${p.nombre}" style="width:70px; padding:2px" value="0">
+    </div>
+  `).join('');
+  modal.classList.add('active');
 }
 
-function renderModalConsumos(consumosActuales) {
-  const cont = document.getElementById('modal-consumos');
-  cont.innerHTML = '';
-  if (state.platos.length === 0) {
-    cont.innerHTML = '<p style="opacity:0.4;font-size:13px;">No hay platos configurados.</p>';
-    return;
-  }
-  state.platos.forEach(({ nombre }) => {
-    const val = consumosActuales[nombre] !== undefined ? consumosActuales[nombre] : 0;
-    const row = document.createElement('div');
-    row.className = 'consumo-edit-row';
-    row.innerHTML = `
-      <span class="consumo-edit-nombre">${nombre}</span>
-      <input type="number" class="consumo-edit-input" data-plato="${nombre}" min="0" step="0.25" value="${val}" />
-      <span class="consumo-edit-label">por pedido</span>`;
-    cont.appendChild(row);
-  });
-}
-
-function guardarModalIngrediente() {
-  const nombre = document.getElementById('inp-ing-nombre').value.trim();
-  if (!nombre) { alert('Indica el nombre del ingrediente'); return; }
-  const stockInicial = parseFloat(document.getElementById('inp-ing-stock').value) || 0;
-  const unidad = document.getElementById('inp-ing-unidad').value.trim() || 'uds';
-  const umbral = parseFloat(document.getElementById('inp-ing-umbral').value) || 0;
-  const consumos = {};
-  document.querySelectorAll('#modal-consumos .consumo-edit-input').forEach(inp => {
-    const v = parseFloat(inp.value);
-    if (!isNaN(v) && v > 0) consumos[inp.dataset.plato] = v;
+document.getElementById('btn-modal-save').onclick = () => {
+  const ing = {
+    id: state._editIngId || Date.now(),
+    nombre: document.getElementById('mod-ing-nombre').value,
+    unit: document.getElementById('mod-ing-unidad').value,
+    stockActual: parseFloat(document.getElementById('mod-ing-actual').value),
+    stockInicial: parseFloat(document.getElementById('mod-ing-inicial').value),
+    consumos: {}
+  };
+  document.querySelectorAll('.ing-cons').forEach(inp => {
+    ing.consumos[inp.dataset.plato] = parseFloat(inp.value) || 0;
   });
 
-  if (state._ingEditId) {
-    const ing = state.ingredientes.find(i => i.id === state._ingEditId);
-    if (ing) {
-      const diffInicial = stockInicial - ing.stockInicial;
-      ing.nombre = nombre; ing.stockInicial = stockInicial; ing.unidad = unidad;
-      ing.umbral = umbral; ing.consumos = consumos;
-      ing.stockActual = Math.max(0, ing.stockActual + diffInicial);
-    }
-  } else {
-    state.ingredientes.push({ id: Date.now(), nombre, unidad, stockInicial, stockActual: stockInicial, umbral, consumos });
-  }
-  guardar();
-  document.getElementById('modal-ingrediente').style.display = 'none';
-  renderAvisos();
+  if(state._editIngId) state.ingredientes = state.ingredientes.map(i => i.id === ing.id ? ing : i);
+  else state.ingredientes.push(ing);
+  
+  guardar(); modal.classList.remove('active'); renderStock();
+};
+
+document.getElementById('btn-modal-cancel').onclick = () => modal.classList.remove('active');
+
+/* --- NAVEGACIÓN --- */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.tab-btn, .panel').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(`panel-${btn.dataset.tab}`).classList.add('active');
+    if(btn.dataset.tab === 'cola') renderCola();
+    if(btn.dataset.tab === 'config') renderConfig();
+  };
+});
+
+document.querySelectorAll('.sub-tab').forEach(btn => {
+  btn.onclick = () => {
+    state.catActiva = btn.dataset.cat;
+    document.querySelectorAll('.sub-tab').forEach(el => el.classList.remove('active'));
+    btn.classList.add('active');
+    renderPlatos();
+  };
+});
+
+/* --- CONFIG Y COLA --- */
+function renderConfig() {
+  document.getElementById('tag-camareros').innerHTML = state.camareros.map(c => `<span class="tag">${c}</span>`).join('');
+  document.getElementById('tag-platos').innerHTML = state.platos.map(p => `<span class="tag">${p.seccion.toUpperCase()}: ${p.nombre}</span>`).join('');
 }
 
-document.getElementById('btn-add-ingrediente-open').addEventListener('click', () => abrirModalIngrediente(null));
-document.getElementById('btn-modal-save').addEventListener('click', guardarModalIngrediente);
-document.getElementById('btn-modal-cancel').addEventListener('click', () => { document.getElementById('modal-ingrediente').style.display = 'none'; });
-document.getElementById('modal-ingrediente').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; });
+document.getElementById('btn-add-plato').onclick = () => {
+  const nom = document.getElementById('inp-plato').value;
+  const sec = document.getElementById('sel-cat-nueva').value;
+  if(nom) { state.platos.push({nombre: nom, seccion: sec}); guardar(); renderConfig(); renderPlatos(); }
+};
 
-/* ── Descargar PDF cantidades ── */
-function descargarPDF() {
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const fecha = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-
-  const RED = [139, 16, 16];
-  const GREEN = [45, 90, 39];
-  const DARK = [26, 15, 15];
-  const LIGHT_RED = [250, 235, 235];
-  const LIGHT_GREEN = [235, 245, 233];
-  const LIGHT_ORANGE = [255, 245, 230];
-  const ORANGE = [184, 92, 0];
-  const W = 210;
-  const MARGIN = 18;
-  const COL_W = W - MARGIN * 2;
-
-  // Cabecera
-  doc.setFillColor(...RED);
-  doc.rect(0, 0, W, 32, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
-  doc.text('Comandas · Día de la Cruz', MARGIN, 13);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('Granada', MARGIN, 20);
-  doc.setFontSize(9);
-  doc.text(`Generado el ${fecha} a las ${hora}`, MARGIN, 27);
-
-  let y = 42;
-
-  // Resumen pedidos pendientes/listos
-  const pendientes = state.cola.filter(x => !x.entregada).length;
-  const listos = state.cola.filter(x => x.entregada).length;
-  doc.setFillColor(245, 245, 245);
-  doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
-  doc.setTextColor(...DARK);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(`Pedidos pendientes: ${pendientes}   ·   Entregados: ${listos}   ·   Total comandas: ${state.cola.length}`, MARGIN + 4, y + 9);
-  y += 20;
-
-  // Secciones y platos
-  ['cocina', 'plancha'].forEach(sec => {
-    const platosGrupo = state.platos.filter(p => p.seccion === sec);
-    if (platosGrupo.length === 0) return;
-
-    // Header sección
-    const bgSec = sec === 'cocina' ? LIGHT_RED : LIGHT_ORANGE;
-    const colorSec = sec === 'cocina' ? RED : ORANGE;
-    doc.setFillColor(...bgSec);
-    doc.roundedRect(MARGIN, y, COL_W, 9, 2, 2, 'F');
-    doc.setTextColor(...colorSec);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text(sec.toUpperCase(), MARGIN + 4, y + 6);
-    y += 13;
-
-    // Filas de platos
-    platosGrupo.forEach(({ nombre }, idx) => {
-      const count = state.cantidades[nombre] || 0;
-      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [250, 248, 246];
-      doc.setFillColor(...rowBg);
-      doc.rect(MARGIN, y, COL_W, 9, 'F');
-      // borde sutil
-      doc.setDrawColor(220, 200, 200);
-      doc.rect(MARGIN, y, COL_W, 9);
-      doc.setTextColor(...DARK);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(nombre, MARGIN + 4, y + 6.3);
-      // Número en rojo
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...RED);
-      doc.setFontSize(13);
-      doc.text(String(count), MARGIN + COL_W - 12, y + 6.8, { align: 'right' });
-      y += 9;
-    });
-    y += 6;
-  });
-
-  // Línea separadora
-  doc.setDrawColor(...RED);
-  doc.setLineWidth(0.5);
-  doc.line(MARGIN, y, MARGIN + COL_W, y);
-  y += 8;
-
-  // Total general
-  const total = Object.values(state.cantidades).reduce((a, b) => a + b, 0);
-  doc.setFillColor(...LIGHT_RED);
-  doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
-  doc.setTextColor(...RED);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('TOTAL DEL DÍA', MARGIN + 4, y + 9);
-  doc.setFontSize(16);
-  doc.text(String(total), MARGIN + COL_W - 6, y + 9.5, { align: 'right' });
-  y += 22;
-
-  // Stock de ingredientes (si hay)
-  if (state.ingredientes.length > 0) {
-    doc.setTextColor(...GREEN);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('Estado del stock', MARGIN, y);
-    y += 8;
-
-    state.ingredientes.forEach(ing => {
-      if (y > 265) { doc.addPage(); y = 20; }
-      const enAlerta = ing.stockActual <= ing.umbral;
-      const rowBg = enAlerta ? [255, 240, 220] : LIGHT_GREEN;
-      doc.setFillColor(...rowBg);
-      doc.roundedRect(MARGIN, y, COL_W, 10, 2, 2, 'F');
-      doc.setTextColor(...DARK);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`${ing.nombre}`, MARGIN + 4, y + 7);
-      const stockTxt = `${formatStock(ing.stockActual)} / ${ing.stockInicial} ${ing.unidad}`;
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(enAlerta ? ORANGE[0] : GREEN[0], enAlerta ? ORANGE[1] : GREEN[1], enAlerta ? ORANGE[2] : GREEN[2]);
-      doc.text(stockTxt, MARGIN + COL_W - 4, y + 7, { align: 'right' });
-      if (enAlerta) {
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(7);
-        doc.setTextColor(...ORANGE);
-        doc.text('⚠ Stock bajo', MARGIN + COL_W - 4, y + 10.5, { align: 'right' });
-      }
-      y += 12;
-    });
-    y += 4;
-  }
-
-  // Pie
-  if (y > 265) { doc.addPage(); y = 20; }
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN, y, MARGIN + COL_W, y);
-  y += 5;
-  doc.setTextColor(150, 150, 150);
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(8);
-  doc.text('Comandas · Día de la Cruz · Granada', W / 2, y, { align: 'center' });
-
-  // Nombre de archivo con fecha
-  const fechaArchivo = new Date().toISOString().slice(0, 10);
-  doc.save(`comandas_${fechaArchivo}.pdf`);
+function renderCola() {
+  const cont = document.getElementById('lista-cola');
+  cont.innerHTML = state.cola.map(p => `
+    <div class="badge-pedido" style="padding:10px; margin-bottom:5px; opacity:${p.entregada?0.5:1}">
+      <span>#${p.id} - ${p.plato} (${p.camarero})</span>
+      <button onclick="toggleEntregado(${p.id})">${p.entregada?'Reabrir':'Entregar'}</button>
+    </div>
+  `).join('');
 }
 
-document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDF);
+window.toggleEntregado = (id) => {
+  const p = state.cola.find(x => x.id === id);
+  if(p) p.entregada = !p.entregada;
+  guardar(); renderCola(); actualizarUI();
+};
 
-/* ── Init ── */
+document.getElementById('btn-limpiar').onclick = () => {
+  state.cola = state.cola.filter(p => !p.entregada);
+  guardar(); renderCola(); actualizarUI();
+};
+
+/* --- INIT --- */
 cargar();
-renderCamarerosDrag();
-renderSeccion();
-actualizarStats();
-actualizarAvisosBadge();
+renderCamareros();
+renderPlatos();
+renderStock();
+actualizarUI();
