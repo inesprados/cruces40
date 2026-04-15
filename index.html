@@ -9,83 +9,103 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+<div class="wrapper">
 
-  <div class="wrapper">
-
-    <header>
-      <div class="header-left">
-        <svg class="clavel-svg" viewBox="0 0 72 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M36 88 C34 72 33 60 35 48 C36 42 36 36 36 30" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
-          <path d="M35 62 C28 58 22 52 24 44 C28 50 32 55 35 62Z" fill="#2d5a27" opacity="0.85"/>
-          <path d="M36 55 C44 50 50 44 47 36 C43 43 40 49 36 55Z" fill="#3a7030" opacity="0.7"/>
-          <path d="M28 30 C30 26 32 24 36 23 C40 24 42 26 44 30 C42 28 40 27 36 27 C32 27 30 28 28 30Z" fill="#4a8040"/>
-          <path d="M36 26 C31 20 25 18 22 14 C20 10 22 6 25 5 C28 4 30 7 31 10 C32 7 33 4 36 3 C39 4 40 7 41 10 C42 7 44 4 47 5 C50 6 52 10 50 14 C47 18 41 20 36 26Z" fill="#a01818"/>
-          <path d="M36 26 C33 19 27 16 25 11 C24 8 26 5 28 6 C30 7 31 10 32 13 C33 10 34 6 36 5 C38 6 39 10 40 13 C41 10 42 7 44 6 C46 5 48 8 47 11 C45 16 39 19 36 26Z" fill="#c02020"/>
-          <path d="M36 27 C34 22 30 18 28 14 C27 11 28 8 30 9 C31 10 32 13 33 16 C33 12 34 8 36 7 C38 8 39 12 39 16 C40 13 41 10 43 9 C45 8 46 11 45 14 C43 18 38 22 36 27Z" fill="#e03030"/>
-        </svg>
-        <div class="logo-text">
-          <h1>Comandas</h1>
-          <p>Día de la Cruz · Granada</p>
-        </div>
-      </div>
-      <div class="header-stats">
-        <span id="stat-pendientes" class="stat-pill pendientes">0 pendientes</span>
-        <span id="stat-listos" class="stat-pill listos">0 listos</span>
-      </div>
-    </header>
-
-    <div class="tabs">
-      <button class="tab active" data-tab="comandas">Comandas</button>
-      <button class="tab" data-tab="config">Configurar</button>
-    </div>
-
-    <!-- Panel principal: Comandas -->
-    <div id="panel-comandas" class="panel active">
-      <div class="comandas-layout">
-        <div class="col-camareros">
-          <p class="col-label">Arrastra el camarero →</p>
-          <div id="lista-camareros-drag" class="lista-platos"></div>
-        </div>
-        <div class="col-platos">
-          <p class="col-label">Platos solicitados</p>
-          <div id="lista-platos-drop" class="lista-camareros-drop"></div>
-        </div>
+  <header>
+    <div class="header-left">
+      <svg class="clavel-svg" viewBox="0 0 72 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M36 88 C34 72 33 60 35 48 C36 42 36 36 36 30" stroke="#2d5a27" stroke-width="2" stroke-linecap="round"/>
+        <path d="M35 62 C28 58 22 52 24 44 C28 50 32 55 35 62Z" fill="#2d5a27" opacity="0.85"/>
+        <path d="M36 55 C44 50 50 44 47 36 C43 43 40 49 36 55Z" fill="#3a7030" opacity="0.7"/>
+        <path d="M28 30 C30 26 32 24 36 23 C40 24 42 26 44 30 C42 28 40 27 36 27 C32 27 30 28 28 30Z" fill="#4a8040"/>
+        <path d="M36 26 C31 20 25 18 22 14 C20 10 22 6 25 5 C28 4 30 7 31 10 C32 7 33 4 36 3 C39 4 40 7 41 10 C42 7 44 4 47 5 C50 6 52 10 50 14 C47 18 41 20 36 26Z" fill="#a01818"/>
+        <path d="M36 26 C33 19 27 16 25 11 C24 8 26 5 28 6 C30 7 31 10 32 13 C33 10 34 6 36 5 C38 6 39 10 40 13 C41 10 42 7 44 6 C46 5 48 8 47 11 C45 16 39 19 36 26Z" fill="#c02020"/>
+        <path d="M36 27 C34 22 30 18 28 14 C27 11 28 8 30 9 C31 10 32 13 33 16 C33 12 34 8 36 7 C38 8 39 12 39 16 C40 13 41 10 43 9 C45 8 46 11 45 14 C43 18 38 22 36 27Z" fill="#e03030"/>
+      </svg>
+      <div class="logo-text">
+        <h1>Comandas</h1>
+        <p>Día de la Cruz · Granada</p>
       </div>
     </div>
-
-    <!-- Panel detalle de plato -->
-    <div id="panel-detalle" class="panel">
-      <div class="detalle-header">
-        <button id="btn-volver" class="btn-volver">← Volver</button>
-        <h2 id="detalle-titulo" class="detalle-titulo"></h2>
-      </div>
-      <p class="col-label" style="margin-bottom:15px;">Desliza a la izquierda para eliminar un pedido</p>
-      <div id="lista-detalle"></div>
+    <div class="header-stats">
+      <span id="stat-pendientes" class="stat-pill pendientes">0 pendientes</span>
+      <span id="stat-listos" class="stat-pill listos">0 listos</span>
     </div>
+  </header>
 
-    <!-- Panel configuración -->
-    <div id="panel-config" class="panel">
-      <div class="config-grid">
-        <div class="card">
-          <p class="card-title">Camareros</p>
-          <div id="tag-camareros" class="tag-cloud"></div>
-          <div class="add-row">
-            <input id="inp-camarero" class="add-input" placeholder="Nombre del camarero…" />
-            <button class="btn-add" id="btn-add-camarero">+ Añadir</button>
-          </div>
-        </div>
-        <div class="card">
-          <p class="card-title">Platos</p>
-          <div id="tag-platos" class="tag-cloud"></div>
-          <div class="add-row">
-            <input id="inp-plato" class="add-input" placeholder="Nombre del plato…" />
-            <button class="btn-add" id="btn-add-plato">+ Añadir</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
+  <div class="tabs">
+    <button class="tab active" data-tab="comandas">Comandas</button>
+    <button class="tab" data-tab="cantidades">Cantidades</button>
+    <button class="tab" data-tab="config">Configurar</button>
   </div>
-  <script src="app.js"></script>
+
+  <!-- Panel Comandas -->
+  <div id="panel-comandas" class="panel active">
+    <!-- Camareros horizontal -->
+    <div class="camareros-bar">
+      <span class="bar-label">Arrastra →</span>
+      <div id="lista-camareros-drag" class="camareros-horizontal"></div>
+    </div>
+
+    <!-- Subtabs Cocina / Plancha -->
+    <div class="subtabs">
+      <button class="subtab active" data-seccion="cocina">
+        Cocina <span class="subtab-badge" id="subtab-badge-cocina" style="display:none"></span>
+      </button>
+      <button class="subtab" data-seccion="plancha">
+        Plancha <span class="subtab-badge" id="subtab-badge-plancha" style="display:none"></span>
+      </button>
+    </div>
+
+    <div id="lista-platos-drop" class="lista-camareros-drop"></div>
+  </div>
+
+  <!-- Panel Detalle plato -->
+  <div id="panel-detalle" class="panel">
+    <div class="detalle-header">
+      <button id="btn-volver" class="btn-volver">← Volver</button>
+      <h2 id="detalle-titulo" class="detalle-titulo"></h2>
+    </div>
+    <p class="col-label">Desliza a la izquierda para eliminar un pedido</p>
+    <div id="lista-detalle"></div>
+  </div>
+
+  <!-- Panel Cantidades -->
+  <div id="panel-cantidades" class="panel">
+    <div class="cantidades-toolbar">
+      <p class="col-label" style="margin:0;">Total acumulado del día</p>
+      <button class="btn-danger" id="btn-reset-cantidades">Reiniciar contadores</button>
+    </div>
+    <div id="lista-cantidades"></div>
+  </div>
+
+  <!-- Panel Configurar -->
+  <div id="panel-config" class="panel">
+    <div class="config-grid">
+      <div class="card">
+        <p class="card-title">Camareros</p>
+        <div id="tag-camareros" class="tag-cloud"></div>
+        <div class="add-row">
+          <input id="inp-camarero" class="add-input" placeholder="Nombre del camarero…" />
+          <button class="btn-add" id="btn-add-camarero">+ Añadir</button>
+        </div>
+      </div>
+      <div class="card">
+        <p class="card-title">Platos</p>
+        <div id="tag-platos" class="tag-cloud"></div>
+        <div class="add-row">
+          <select id="sel-seccion-nueva" class="add-select">
+            <option value="cocina">Cocina</option>
+            <option value="plancha">Plancha</option>
+          </select>
+          <input id="inp-plato" class="add-input" placeholder="Nombre del plato…" />
+          <button class="btn-add" id="btn-add-plato">+ Añadir</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script src="app.js"></script>
 </body>
 </html>
