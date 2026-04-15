@@ -14,6 +14,8 @@ const state = {
   contador: 1,
   seccionActiva: 'cocina',
   platoActivo: null,
+  ingredientes: [], // [{ id, nombre, unidad, stockInicial, stockActual, umbral, consumos:{nombrePlato: fraccion} }]
+  _ingEditId: null,
 };
 
 /* ── Cookies ── */
@@ -41,6 +43,7 @@ function guardar() {
     cola: state.cola,
     cantidades: state.cantidades,
     contador: state.contador,
+    ingredientes: state.ingredientes,
   });
 }
 function cargar() {
@@ -51,6 +54,7 @@ function cargar() {
     if (datos.cola) state.cola = datos.cola;
     if (datos.cantidades) state.cantidades = datos.cantidades;
     if (datos.contador) state.contador = datos.contador;
+    if (datos.ingredientes) state.ingredientes = datos.ingredientes;
   }
 }
 
@@ -259,6 +263,13 @@ function añadirPedido(plato, camarero) {
   };
   state.cola.push(pedido);
   state.cantidades[plato] = (state.cantidades[plato] || 0) + 1;
+  // Descontar stock de ingredientes
+  state.ingredientes.forEach(ing => {
+    const fraccion = ing.consumos && ing.consumos[plato];
+    if (fraccion && fraccion > 0) {
+      ing.stockActual = Math.max(0, (ing.stockActual || 0) - fraccion);
+    }
+  });
   guardar();
   actualizarTodo();
 }
@@ -267,6 +278,8 @@ function actualizarTodo() {
   actualizarStats();
   renderSeccion();
   if (document.getElementById('panel-cantidades').classList.contains('active')) renderCantidades();
+  if (document.getElementById('panel-avisos').classList.contains('active')) renderAvisos();
+  actualizarAvisosBadge();
 }
 
 function actualizarStats() {
@@ -439,11 +452,320 @@ document.querySelectorAll('.tab').forEach(btn => {
     state.platoActivo = null;
     if (btn.dataset.tab === 'config') renderConfig();
     if (btn.dataset.tab === 'cantidades') renderCantidades();
+    if (btn.dataset.tab === 'avisos') renderAvisos();
   });
 });
+
+/* ── Avisos: badge pestaña ── */
+function actualizarAvisosBadge() {
+  const enAlerta = state.ingredientes.filter(ing => ing.stockActual <= ing.umbral).length;
+  const badge = document.getElementById('avisos-tab-badge');
+  if (badge) { badge.textContent = enAlerta; badge.style.display = enAlerta > 0 ? 'inline-block' : 'none'; }
+}
+
+/* ── Avisos: render panel ── */
+function renderAvisos() {
+  renderAlertasStock();
+  renderListaIngredientes();
+  actualizarAvisosBadge();
+}
+
+function renderAlertasStock() {
+  const cont = document.getElementById('avisos-alertas');
+  cont.innerHTML = '';
+  const enAlerta = state.ingredientes.filter(ing => ing.stockActual <= ing.umbral);
+  if (enAlerta.length === 0) {
+    cont.innerHTML = '<div style="background:var(--green-dim);border:1px solid var(--green);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:14px;color:var(--green);font-weight:500;">✓ Todo el stock está en niveles correctos</div>';
+    return;
+  }
+  enAlerta.forEach(ing => {
+    const critico = ing.stockActual <= ing.umbral * 0.5;
+    const div = document.createElement('div');
+    div.className = `alerta-stock${critico ? ' critica' : ''}`;
+    div.innerHTML = `
+      <span class="alerta-icono">${critico ? '🚨' : '⚠️'}</span>
+      <span class="alerta-texto">
+        <strong>${ing.nombre}</strong> — quedan <span class="alerta-stock-val">${formatStock(ing.stockActual)} ${ing.unidad}</span>
+        ${critico ? '· <em>¡Stock crítico!</em>' : `(umbral: ${ing.umbral} ${ing.unidad})`}
+      </span>`;
+    cont.appendChild(div);
+  });
+}
+
+function formatStock(val) {
+  return Number.isInteger(val) ? val : parseFloat(val.toFixed(2));
+}
+
+function renderListaIngredientes() {
+  const cont = document.getElementById('lista-ingredientes');
+  cont.innerHTML = '';
+  if (state.ingredientes.length === 0) {
+    cont.innerHTML = '<p style="opacity:0.4;text-align:center;padding:30px 0;font-size:14px;">Sin ingredientes configurados.<br>Pulsa "+ Añadir ingrediente" para empezar.</p>';
+    return;
+  }
+  state.ingredientes.forEach(ing => {
+    const pct = ing.stockInicial > 0 ? Math.max(0, Math.min(100, (ing.stockActual / ing.stockInicial) * 100)) : 0;
+    const enAlerta = ing.stockActual <= ing.umbral;
+    const critico = ing.stockActual <= ing.umbral * 0.5;
+    const colorBarra = critico ? 'roja' : enAlerta ? 'amarilla' : '';
+
+    const row = document.createElement('div');
+    row.className = `ingrediente-row${critico ? ' critico' : enAlerta ? ' alerta' : ''}`;
+
+    const consumosValidos = Object.entries(ing.consumos || {}).filter(([, v]) => v > 0);
+    const consumosHtml = consumosValidos.map(([plato, v]) =>
+      `<span class="consumo-chip">${plato}: ${formatStock(v)} ${ing.unidad}</span>`).join('');
+
+    row.innerHTML = `
+      <div class="ingrediente-top">
+        <span class="ingrediente-nombre">${ing.nombre} ${enAlerta ? (critico ? '🚨' : '⚠️') : ''}</span>
+        <div class="ingrediente-stock-display">
+          <span class="stock-num">${formatStock(ing.stockActual)}</span>
+          <span class="stock-unidad">${ing.unidad}</span>
+        </div>
+      </div>
+      <div class="stock-barra-wrap"><div class="stock-barra ${colorBarra}" style="width:${pct}%"></div></div>
+      ${consumosValidos.length > 0 ? `<div class="ingrediente-consumos">${consumosHtml}</div>` : ''}
+      <div class="ingrediente-acciones">
+        <button class="btn-ing-edit" data-id="${ing.id}">✏️ Editar</button>
+        <button class="btn-stock-reset" data-id="${ing.id}">↺ Reponer stock</button>
+        <button class="btn-ing-del" data-id="${ing.id}">🗑 Eliminar</button>
+      </div>`;
+
+    row.querySelector('.btn-ing-edit').addEventListener('click', () => abrirModalIngrediente(ing.id));
+    row.querySelector('.btn-ing-del').addEventListener('click', () => {
+      if (confirm(`¿Eliminar ingrediente "${ing.nombre}"?`)) {
+        state.ingredientes = state.ingredientes.filter(i => i.id !== ing.id);
+        guardar(); renderAvisos();
+      }
+    });
+    row.querySelector('.btn-stock-reset').addEventListener('click', () => {
+      ing.stockActual = ing.stockInicial;
+      guardar(); renderAvisos();
+    });
+    cont.appendChild(row);
+  });
+}
+
+/* ── Modal ingrediente ── */
+function abrirModalIngrediente(id) {
+  state._ingEditId = id || null;
+  const ing = id ? state.ingredientes.find(i => i.id === id) : null;
+  document.getElementById('inp-ing-nombre').value = ing ? ing.nombre : '';
+  document.getElementById('inp-ing-stock').value = ing ? ing.stockInicial : 0;
+  document.getElementById('inp-ing-unidad').value = ing ? ing.unidad : '';
+  document.getElementById('inp-ing-umbral').value = ing ? ing.umbral : 10;
+  renderModalConsumos(ing ? ing.consumos : {});
+  document.getElementById('modal-ingrediente').style.display = 'flex';
+}
+
+function renderModalConsumos(consumosActuales) {
+  const cont = document.getElementById('modal-consumos');
+  cont.innerHTML = '';
+  if (state.platos.length === 0) {
+    cont.innerHTML = '<p style="opacity:0.4;font-size:13px;">No hay platos configurados.</p>';
+    return;
+  }
+  state.platos.forEach(({ nombre }) => {
+    const val = consumosActuales[nombre] !== undefined ? consumosActuales[nombre] : 0;
+    const row = document.createElement('div');
+    row.className = 'consumo-edit-row';
+    row.innerHTML = `
+      <span class="consumo-edit-nombre">${nombre}</span>
+      <input type="number" class="consumo-edit-input" data-plato="${nombre}" min="0" step="0.25" value="${val}" />
+      <span class="consumo-edit-label">por pedido</span>`;
+    cont.appendChild(row);
+  });
+}
+
+function guardarModalIngrediente() {
+  const nombre = document.getElementById('inp-ing-nombre').value.trim();
+  if (!nombre) { alert('Indica el nombre del ingrediente'); return; }
+  const stockInicial = parseFloat(document.getElementById('inp-ing-stock').value) || 0;
+  const unidad = document.getElementById('inp-ing-unidad').value.trim() || 'uds';
+  const umbral = parseFloat(document.getElementById('inp-ing-umbral').value) || 0;
+  const consumos = {};
+  document.querySelectorAll('#modal-consumos .consumo-edit-input').forEach(inp => {
+    const v = parseFloat(inp.value);
+    if (!isNaN(v) && v > 0) consumos[inp.dataset.plato] = v;
+  });
+
+  if (state._ingEditId) {
+    const ing = state.ingredientes.find(i => i.id === state._ingEditId);
+    if (ing) {
+      const diffInicial = stockInicial - ing.stockInicial;
+      ing.nombre = nombre; ing.stockInicial = stockInicial; ing.unidad = unidad;
+      ing.umbral = umbral; ing.consumos = consumos;
+      ing.stockActual = Math.max(0, ing.stockActual + diffInicial);
+    }
+  } else {
+    state.ingredientes.push({ id: Date.now(), nombre, unidad, stockInicial, stockActual: stockInicial, umbral, consumos });
+  }
+  guardar();
+  document.getElementById('modal-ingrediente').style.display = 'none';
+  renderAvisos();
+}
+
+document.getElementById('btn-add-ingrediente-open').addEventListener('click', () => abrirModalIngrediente(null));
+document.getElementById('btn-modal-save').addEventListener('click', guardarModalIngrediente);
+document.getElementById('btn-modal-cancel').addEventListener('click', () => { document.getElementById('modal-ingrediente').style.display = 'none'; });
+document.getElementById('modal-ingrediente').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; });
+
+/* ── Descargar PDF cantidades ── */
+function descargarPDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const fecha = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+
+  const RED = [139, 16, 16];
+  const GREEN = [45, 90, 39];
+  const DARK = [26, 15, 15];
+  const LIGHT_RED = [250, 235, 235];
+  const LIGHT_GREEN = [235, 245, 233];
+  const LIGHT_ORANGE = [255, 245, 230];
+  const ORANGE = [184, 92, 0];
+  const W = 210;
+  const MARGIN = 18;
+  const COL_W = W - MARGIN * 2;
+
+  // Cabecera
+  doc.setFillColor(...RED);
+  doc.rect(0, 0, W, 32, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(22);
+  doc.text('Comandas · Día de la Cruz', MARGIN, 13);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Granada', MARGIN, 20);
+  doc.setFontSize(9);
+  doc.text(`Generado el ${fecha} a las ${hora}`, MARGIN, 27);
+
+  let y = 42;
+
+  // Resumen pedidos pendientes/listos
+  const pendientes = state.cola.filter(x => !x.entregada).length;
+  const listos = state.cola.filter(x => x.entregada).length;
+  doc.setFillColor(245, 245, 245);
+  doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
+  doc.setTextColor(...DARK);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text(`Pedidos pendientes: ${pendientes}   ·   Entregados: ${listos}   ·   Total comandas: ${state.cola.length}`, MARGIN + 4, y + 9);
+  y += 20;
+
+  // Secciones y platos
+  ['cocina', 'plancha'].forEach(sec => {
+    const platosGrupo = state.platos.filter(p => p.seccion === sec);
+    if (platosGrupo.length === 0) return;
+
+    // Header sección
+    const bgSec = sec === 'cocina' ? LIGHT_RED : LIGHT_ORANGE;
+    const colorSec = sec === 'cocina' ? RED : ORANGE;
+    doc.setFillColor(...bgSec);
+    doc.roundedRect(MARGIN, y, COL_W, 9, 2, 2, 'F');
+    doc.setTextColor(...colorSec);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(sec.toUpperCase(), MARGIN + 4, y + 6);
+    y += 13;
+
+    // Filas de platos
+    platosGrupo.forEach(({ nombre }, idx) => {
+      const count = state.cantidades[nombre] || 0;
+      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [250, 248, 246];
+      doc.setFillColor(...rowBg);
+      doc.rect(MARGIN, y, COL_W, 9, 'F');
+      // borde sutil
+      doc.setDrawColor(220, 200, 200);
+      doc.rect(MARGIN, y, COL_W, 9);
+      doc.setTextColor(...DARK);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(nombre, MARGIN + 4, y + 6.3);
+      // Número en rojo
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(...RED);
+      doc.setFontSize(13);
+      doc.text(String(count), MARGIN + COL_W - 12, y + 6.8, { align: 'right' });
+      y += 9;
+    });
+    y += 6;
+  });
+
+  // Línea separadora
+  doc.setDrawColor(...RED);
+  doc.setLineWidth(0.5);
+  doc.line(MARGIN, y, MARGIN + COL_W, y);
+  y += 8;
+
+  // Total general
+  const total = Object.values(state.cantidades).reduce((a, b) => a + b, 0);
+  doc.setFillColor(...LIGHT_RED);
+  doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
+  doc.setTextColor(...RED);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('TOTAL DEL DÍA', MARGIN + 4, y + 9);
+  doc.setFontSize(16);
+  doc.text(String(total), MARGIN + COL_W - 6, y + 9.5, { align: 'right' });
+  y += 22;
+
+  // Stock de ingredientes (si hay)
+  if (state.ingredientes.length > 0) {
+    doc.setTextColor(...GREEN);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('Estado del stock', MARGIN, y);
+    y += 8;
+
+    state.ingredientes.forEach(ing => {
+      if (y > 265) { doc.addPage(); y = 20; }
+      const enAlerta = ing.stockActual <= ing.umbral;
+      const rowBg = enAlerta ? [255, 240, 220] : LIGHT_GREEN;
+      doc.setFillColor(...rowBg);
+      doc.roundedRect(MARGIN, y, COL_W, 10, 2, 2, 'F');
+      doc.setTextColor(...DARK);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text(`${ing.nombre}`, MARGIN + 4, y + 7);
+      const stockTxt = `${formatStock(ing.stockActual)} / ${ing.stockInicial} ${ing.unidad}`;
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(enAlerta ? ORANGE[0] : GREEN[0], enAlerta ? ORANGE[1] : GREEN[1], enAlerta ? ORANGE[2] : GREEN[2]);
+      doc.text(stockTxt, MARGIN + COL_W - 4, y + 7, { align: 'right' });
+      if (enAlerta) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7);
+        doc.setTextColor(...ORANGE);
+        doc.text('⚠ Stock bajo', MARGIN + COL_W - 4, y + 10.5, { align: 'right' });
+      }
+      y += 12;
+    });
+    y += 4;
+  }
+
+  // Pie
+  if (y > 265) { doc.addPage(); y = 20; }
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, MARGIN + COL_W, y);
+  y += 5;
+  doc.setTextColor(150, 150, 150);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(8);
+  doc.text('Comandas · Día de la Cruz · Granada', W / 2, y, { align: 'center' });
+
+  // Nombre de archivo con fecha
+  const fechaArchivo = new Date().toISOString().slice(0, 10);
+  doc.save(`comandas_${fechaArchivo}.pdf`);
+}
+
+document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDF);
 
 /* ── Init ── */
 cargar();
 renderCamarerosDrag();
 renderSeccion();
 actualizarStats();
+actualizarAvisosBadge();

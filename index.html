@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
 <div class="wrapper">
@@ -36,6 +37,9 @@
   <div class="tabs">
     <button class="tab active" data-tab="comandas">Comandas</button>
     <button class="tab" data-tab="cantidades">Cantidades</button>
+    <button class="tab" data-tab="avisos">
+      Avisos <span id="avisos-tab-badge" class="avisos-tab-badge" style="display:none"></span>
+    </button>
     <button class="tab" data-tab="config">Configurar</button>
   </div>
 
@@ -74,9 +78,50 @@
   <div id="panel-cantidades" class="panel">
     <div class="cantidades-toolbar">
       <p class="col-label" style="margin:0;">Total acumulado del día</p>
-      <button class="btn-danger" id="btn-reset-cantidades">Reiniciar contadores</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-pdf" id="btn-descargar-pdf">⬇ Descargar PDF</button>
+        <button class="btn-danger" id="btn-reset-cantidades">Reiniciar contadores</button>
+      </div>
     </div>
     <div id="lista-cantidades"></div>
+  </div>
+
+  <!-- Panel Avisos -->
+  <div id="panel-avisos" class="panel">
+    <div id="avisos-alertas"></div>
+    <div class="avisos-section-header">
+      <p class="col-label" style="margin:0;">Stock de ingredientes</p>
+      <button class="btn-danger" id="btn-add-ingrediente-open">+ Añadir ingrediente</button>
+    </div>
+    <div id="lista-ingredientes"></div>
+
+    <!-- Modal añadir/editar ingrediente -->
+    <div id="modal-ingrediente" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <h3 class="modal-title">Ingrediente</h3>
+        <input id="inp-ing-nombre" class="add-input" placeholder="Nombre (ej: Tortillas de patata)" style="width:100%;box-sizing:border-box;margin-bottom:10px;" />
+        <div class="modal-row">
+          <div class="modal-field">
+            <label class="modal-label">Stock inicial</label>
+            <input id="inp-ing-stock" type="number" class="count-input" style="width:80px;" min="0" value="0" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Unidad</label>
+            <input id="inp-ing-unidad" class="add-input" placeholder="unidades, barras…" style="width:110px;" />
+          </div>
+          <div class="modal-field">
+            <label class="modal-label">Avisar cuando queden ≤</label>
+            <input id="inp-ing-umbral" type="number" class="count-input" style="width:80px;" min="0" value="10" />
+          </div>
+        </div>
+        <p class="modal-subtitle">¿Cuánto consume cada plato? (0 = no consume)</p>
+        <div id="modal-consumos" class="modal-consumos"></div>
+        <div class="modal-actions">
+          <button class="btn-danger" id="btn-modal-cancel">Cancelar</button>
+          <button class="btn-add" id="btn-modal-save">Guardar</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Panel Configurar -->
