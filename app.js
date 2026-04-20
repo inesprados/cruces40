@@ -103,70 +103,48 @@ function addSwipeToDelete(el, onDelete) {
   window.addEventListener('mouseup', pointerUp);
 }
 
-/* ── Camareros horizontal (con soporte táctil) ── */
-let _touchDragNombre = null;
-let _touchClone = null;
+/* ── Camareros: selección + tap ── */
+state.camareroSeleccionado = null;
+
+function seleccionarCamarero(nombre) {
+  if (state.camareroSeleccionado === nombre) {
+    // Deseleccionar si se pulsa el mismo
+    state.camareroSeleccionado = null;
+  } else {
+    state.camareroSeleccionado = nombre;
+  }
+  renderCamarerosDrag();
+  renderSeccion();
+}
 
 function renderCamarerosDrag() {
   const lista = document.getElementById('lista-camareros-drag');
   lista.innerHTML = '';
   state.camareros.forEach(nombre => {
     const el = document.createElement('div');
-    el.className = 'camarero-chip';
-    el.draggable = true;
+    const seleccionado = state.camareroSeleccionado === nombre;
+    el.className = 'camarero-chip' + (seleccionado ? ' seleccionado' : '');
     el.textContent = nombre;
-
-    // Drag ratón / desktop
-    el.addEventListener('dragstart', (e) => {
-      e.dataTransfer.setData('text/plain', nombre);
-      el.classList.add('dragging');
-    });
-    el.addEventListener('dragend', () => el.classList.remove('dragging'));
-
-    // Touch drag para tablet / móvil
-    el.addEventListener('touchstart', (e) => {
-      _touchDragNombre = nombre;
-      const t = e.touches[0];
-      _touchClone = el.cloneNode(true);
-      _touchClone.style.cssText = [
-        'position:fixed', 'z-index:9999', 'pointer-events:none', 'opacity:0.85',
-        'left:' + (t.clientX - el.offsetWidth / 2) + 'px',
-        'top:' + (t.clientY - el.offsetHeight / 2) + 'px',
-        'width:' + el.offsetWidth + 'px',
-        'background:var(--red-dim2)', 'border:2px solid var(--red)',
-        'border-radius:30px', 'padding:12px 20px', 'font-size:15px', 'font-weight:500'
-      ].join(';');
-      document.body.appendChild(_touchClone);
-      el.classList.add('dragging');
-    }, { passive: true });
-
-    el.addEventListener('touchmove', (e) => {
-      if (!_touchClone) return;
-      const t = e.touches[0];
-      _touchClone.style.left = (t.clientX - _touchClone.offsetWidth / 2) + 'px';
-      _touchClone.style.top = (t.clientY - _touchClone.offsetHeight / 2) + 'px';
-      _touchClone.style.display = 'none';
-      const debajo = document.elementFromPoint(t.clientX, t.clientY);
-      _touchClone.style.display = '';
-      document.querySelectorAll('.camarero-drop-zone').forEach(z => z.classList.remove('drag-over'));
-      const zona = debajo && debajo.closest('.camarero-drop-zone');
-      if (zona) zona.classList.add('drag-over');
-    }, { passive: true });
-
-    el.addEventListener('touchend', (e) => {
-      el.classList.remove('dragging');
-      if (_touchClone) { _touchClone.remove(); _touchClone = null; }
-      document.querySelectorAll('.camarero-drop-zone').forEach(z => z.classList.remove('drag-over'));
-      if (!_touchDragNombre) return;
-      const t = e.changedTouches[0];
-      const debajo = document.elementFromPoint(t.clientX, t.clientY);
-      const zona = debajo && debajo.closest('.camarero-drop-zone');
-      if (zona && zona.dataset.plato) añadirPedido(zona.dataset.plato, _touchDragNombre);
-      _touchDragNombre = null;
-    });
-
+    if (seleccionado) {
+      el.innerHTML = '<span class="chip-check">✓</span> ' + nombre;
+    }
+    el.addEventListener('click', () => seleccionarCamarero(nombre));
     lista.appendChild(el);
   });
+
+  // Actualizar instrucción
+  const label = document.querySelector('.bar-label');
+  if (label) {
+    if (state.camareroSeleccionado) {
+      label.textContent = '↓ Pulsa el plato';
+      label.style.color = 'var(--green)';
+      label.style.fontWeight = '600';
+    } else {
+      label.textContent = '1. Elige camarero';
+      label.style.color = '';
+      label.style.fontWeight = '';
+    }
+  }
 }
 
 /* ── Render sección ── */
@@ -192,7 +170,7 @@ function renderSeccion() {
 
   platosSeccion.forEach(({ nombre }) => {
     const zona = document.createElement('div');
-    zona.className = 'camarero-drop-zone';
+    zona.className = 'camarero-drop-zone' + (state.camareroSeleccionado ? ' zona-lista' : '');
     zona.dataset.plato = nombre;
 
     const header = document.createElement('div');
@@ -230,6 +208,23 @@ function renderSeccion() {
     });
     zona.appendChild(pedidosCont);
 
+    // Click / tap sobre la zona del plato
+    zona.addEventListener('click', (e) => {
+      // Ignorar si se pulsó el botón de detalle
+      if (e.target.closest('.btn-detalle')) return;
+      if (!state.camareroSeleccionado) {
+        // Sin camarero seleccionado: pulsar animación de aviso
+        zona.classList.add('zona-shake');
+        setTimeout(() => zona.classList.remove('zona-shake'), 500);
+        return;
+      }
+      añadirPedido(nombre, state.camareroSeleccionado);
+      // Feedback visual en la zona
+      zona.classList.add('zona-flash');
+      setTimeout(() => zona.classList.remove('zona-flash'), 400);
+    });
+
+    // Mantener drag desktop como alternativa
     zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('drag-over'); });
     zona.addEventListener('dragleave', () => zona.classList.remove('drag-over'));
     zona.addEventListener('drop', e => {

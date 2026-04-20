@@ -403,3 +403,68 @@ header { display: flex; align-items: center; justify-content: space-between; bor
 
   .zona-header { flex-wrap: wrap; gap: 6px; }
 }
+
+/* ── Selección de camarero ── */
+.camarero-chip {
+  transition: background 0.15s, box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+}
+.camarero-chip.seleccionado {
+  background: var(--red);
+  color: #fff;
+  border-color: var(--red);
+  box-shadow: 0 3px 12px rgba(192,32,32,0.35);
+  transform: scale(1.06);
+}
+.camarero-chip.seleccionado:hover {
+  background: var(--red-deep);
+}
+.chip-check {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Zonas listas para recibir tap */
+.camarero-drop-zone {
+  cursor: default;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+.camarero-drop-zone.zona-lista {
+  background: #fffbf0;
+  border-color: var(--orange);
+  border-style: solid;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(184,92,0,0.12);
+}
+.camarero-drop-zone.zona-lista:hover,
+.camarero-drop-zone.zona-lista:active {
+  background: var(--orange-dim);
+  border-color: var(--orange);
+}
+
+/* Flash de confirmación al añadir pedido */
+.camarero-drop-zone.zona-flash {
+  animation: zonaFlash 0.4s ease;
+}
+@keyframes zonaFlash {
+  0%   { background: rgba(45,90,39,0.25); }
+  100% { background: #fff; }
+}
+
+/* Shake cuando se pulsa sin camarero seleccionado */
+.camarero-drop-zone.zona-shake {
+  animation: zonaShake 0.4s ease;
+  border-color: var(--red) !important;
+}
+@keyframes zonaShake {
+  0%, 100% { transform: translateX(0); }
+  20%       { transform: translateX(-6px); }
+  40%       { transform: translateX(6px); }
+  60%       { transform: translateX(-4px); }
+  80%       { transform: translateX(4px); }
+}
+
+/* Instrucción de paso en la barra */
+.bar-label {
+  transition: color 0.2s;
+  font-size: 13px;
+}
