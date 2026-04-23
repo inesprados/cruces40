@@ -8,7 +8,7 @@ const state = {
     { nombre: 'Carne en salsa', seccion: 'cocina' },
     { nombre: 'Bocata tortilla', seccion: 'cocina' },
     { nombre: 'Bocata carne en salsa', seccion: 'cocina' },
-    { nombre: 'Perrito', seccion: 'cocina' },  
+    { nombre: 'Perrito', seccion: 'cocina' },
     { nombre: 'Bocata jamón', seccion: 'cocina' },
     { nombre: 'Bocata jamón y queso', seccion: 'cocina' },
     { nombre: 'Bocata jamón con tomate', seccion: 'cocina' },
@@ -32,7 +32,88 @@ const state = {
   contador: 1,
   seccionActiva: 'cocina',
   platoActivo: null,
-  ingredientes: [], // [{ id, nombre, unidad, stockInicial, stockActual, umbral, consumos:{nombrePlato: fraccion} }]
+  ingredientes: [
+    {
+      id: 1, nombre: 'Tortillas de patata', unidad: 'tortillas',
+      stockInicial: 50, stockActual: 50, umbral: 8,
+      consumos: { 'Tortilla': 1, 'Bocata tortilla': 0.5 }
+    },
+    {
+      id: 2, nombre: 'Barras de pan', unidad: 'barras',
+      stockInicial: 80, stockActual: 80, umbral: 10,
+      consumos: {
+        'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
+        'Bocata jamón': 1, 'Bocata jamón y queso': 1,
+        'Bocata jamón con tomate': 1, 'Bocata atún con tomate': 1,
+        'Bocata queso': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1,
+        'Bocata lomo, queso y pimientos': 1, 'Bocata morcilla': 1,
+        'Bocata longaniza': 1, 'Perrito': 1,
+      }
+    },
+    {
+      id: 3, nombre: 'Lomo', unidad: 'raciones',
+      stockInicial: 40, stockActual: 40, umbral: 6,
+      consumos: { 'Lomo': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1, 'Bocata lomo, queso y pimientos': 1 }
+    },
+    {
+      id: 4, nombre: 'Morcilla', unidad: 'raciones',
+      stockInicial: 30, stockActual: 30, umbral: 5,
+      consumos: { 'Morcilla': 1, 'Bocata morcilla': 1 }
+    },
+    {
+      id: 5, nombre: 'Longaniza', unidad: 'raciones',
+      stockInicial: 30, stockActual: 30, umbral: 5,
+      consumos: { 'Longaniza': 1, 'Bocata longaniza': 1 }
+    },
+    {
+      id: 6, nombre: 'Jamón', unidad: 'raciones',
+      stockInicial: 40, stockActual: 40, umbral: 6,
+      consumos: { 'Bocata jamón': 1, 'Bocata jamón y queso': 1, 'Bocata jamón con tomate': 1 }
+    },
+    {
+      id: 7, nombre: 'Queso', unidad: 'raciones',
+      stockInicial: 35, stockActual: 35, umbral: 5,
+      consumos: {
+        'Queso': 1, 'Bocata jamón y queso': 0.5, 'Bocata queso': 1,
+        'Bocata lomo queso': 0.5, 'Bocata lomo, queso y pimientos': 0.5,
+      }
+    },
+    {
+      id: 8, nombre: 'Pinchitos', unidad: 'raciones',
+      stockInicial: 60, stockActual: 60, umbral: 8,
+      consumos: { 'Pinchito': 1 }
+    },
+    {
+      id: 9, nombre: 'Arroz', unidad: 'raciones',
+      stockInicial: 30, stockActual: 30, umbral: 5,
+      consumos: { 'Arroz': 1 }
+    },
+    {
+      id: 10, nombre: 'Carne en salsa', unidad: 'raciones',
+      stockInicial: 30, stockActual: 30, umbral: 5,
+      consumos: { 'Carne en salsa': 1, 'Bocata carne en salsa': 1 }
+    },
+    {
+      id: 11, nombre: 'Migas', unidad: 'raciones',
+      stockInicial: 25, stockActual: 25, umbral: 4,
+      consumos: { 'Migas': 1 }
+    },
+    {
+      id: 12, nombre: 'Atún', unidad: 'latas',
+      stockInicial: 20, stockActual: 20, umbral: 3,
+      consumos: { 'Bocata atún con tomate': 1 }
+    },
+    {
+      id: 13, nombre: 'Perritos (salchichas)', unidad: 'unidades',
+      stockInicial: 30, stockActual: 30, umbral: 5,
+      consumos: { 'Perrito': 1 }
+    },
+    {
+      id: 14, nombre: 'Pimientos', unidad: 'raciones',
+      stockInicial: 20, stockActual: 20, umbral: 4,
+      consumos: { 'Pimientos fritos': 1, 'Bocata lomo, queso y pimientos': 0.5 }
+    },
+  ],
   _ingEditId: null,
 };
 
@@ -121,48 +202,22 @@ function addSwipeToDelete(el, onDelete) {
   window.addEventListener('mouseup', pointerUp);
 }
 
-/* ── Camareros: selección + tap ── */
-state.camareroSeleccionado = null;
-
-function seleccionarCamarero(nombre) {
-  if (state.camareroSeleccionado === nombre) {
-    // Deseleccionar si se pulsa el mismo
-    state.camareroSeleccionado = null;
-  } else {
-    state.camareroSeleccionado = nombre;
-  }
-  renderCamarerosDrag();
-  renderSeccion();
-}
-
+/* ── Camareros horizontal ── */
 function renderCamarerosDrag() {
   const lista = document.getElementById('lista-camareros-drag');
   lista.innerHTML = '';
   state.camareros.forEach(nombre => {
     const el = document.createElement('div');
-    const seleccionado = state.camareroSeleccionado === nombre;
-    el.className = 'camarero-chip' + (seleccionado ? ' seleccionado' : '');
+    el.className = 'camarero-chip';
+    el.draggable = true;
     el.textContent = nombre;
-    if (seleccionado) {
-      el.innerHTML = '<span class="chip-check">✓</span> ' + nombre;
-    }
-    el.addEventListener('click', () => seleccionarCamarero(nombre));
+    el.addEventListener('dragstart', (e) => {
+      e.dataTransfer.setData('text/plain', nombre);
+      el.classList.add('dragging');
+    });
+    el.addEventListener('dragend', () => el.classList.remove('dragging'));
     lista.appendChild(el);
   });
-
-  // Actualizar instrucción
-  const label = document.querySelector('.bar-label');
-  if (label) {
-    if (state.camareroSeleccionado) {
-      label.textContent = '↓ Pulsa el plato';
-      label.style.color = 'var(--green)';
-      label.style.fontWeight = '600';
-    } else {
-      label.textContent = '1. Elige camarero';
-      label.style.color = '';
-      label.style.fontWeight = '';
-    }
-  }
 }
 
 /* ── Render sección ── */
@@ -188,7 +243,7 @@ function renderSeccion() {
 
   platosSeccion.forEach(({ nombre }) => {
     const zona = document.createElement('div');
-    zona.className = 'camarero-drop-zone' + (state.camareroSeleccionado ? ' zona-lista' : '');
+    zona.className = 'camarero-drop-zone';
     zona.dataset.plato = nombre;
 
     const header = document.createElement('div');
@@ -226,23 +281,6 @@ function renderSeccion() {
     });
     zona.appendChild(pedidosCont);
 
-    // Click / tap sobre la zona del plato
-    zona.addEventListener('click', (e) => {
-      // Ignorar si se pulsó el botón de detalle
-      if (e.target.closest('.btn-detalle')) return;
-      if (!state.camareroSeleccionado) {
-        // Sin camarero seleccionado: pulsar animación de aviso
-        zona.classList.add('zona-shake');
-        setTimeout(() => zona.classList.remove('zona-shake'), 500);
-        return;
-      }
-      añadirPedido(nombre, state.camareroSeleccionado);
-      // Feedback visual en la zona
-      zona.classList.add('zona-flash');
-      setTimeout(() => zona.classList.remove('zona-flash'), 400);
-    });
-
-    // Mantener drag desktop como alternativa
     zona.addEventListener('dragover', e => { e.preventDefault(); zona.classList.add('drag-over'); });
     zona.addEventListener('dragleave', () => zona.classList.remove('drag-over'));
     zona.addEventListener('drop', e => {
@@ -324,13 +362,6 @@ function añadirPedido(plato, camarero) {
   };
   state.cola.push(pedido);
   state.cantidades[plato] = (state.cantidades[plato] || 0) + 1;
-  // Descontar stock de ingredientes
-  state.ingredientes.forEach(ing => {
-    const fraccion = ing.consumos && ing.consumos[plato];
-    if (fraccion && fraccion > 0) {
-      ing.stockActual = Math.max(0, (ing.stockActual || 0) - fraccion);
-    }
-  });
   guardar();
   actualizarTodo();
 }
@@ -517,6 +548,7 @@ document.querySelectorAll('.tab').forEach(btn => {
   });
 });
 
+
 /* ── Avisos: badge pestaña ── */
 function actualizarAvisosBadge() {
   const enAlerta = state.ingredientes.filter(ing => ing.stockActual <= ing.umbral).length;
@@ -542,13 +574,13 @@ function renderAlertasStock() {
   enAlerta.forEach(ing => {
     const critico = ing.stockActual <= ing.umbral * 0.5;
     const div = document.createElement('div');
-    div.className = `alerta-stock${critico ? ' critica' : ''}`;
-    div.innerHTML = `
-      <span class="alerta-icono">${critico ? '🚨' : '⚠️'}</span>
-      <span class="alerta-texto">
-        <strong>${ing.nombre}</strong> — quedan <span class="alerta-stock-val">${formatStock(ing.stockActual)} ${ing.unidad}</span>
-        ${critico ? '· <em>¡Stock crítico!</em>' : `(umbral: ${ing.umbral} ${ing.unidad})`}
-      </span>`;
+    div.className = 'alerta-stock' + (critico ? ' critica' : '');
+    div.innerHTML =
+      '<span class="alerta-icono">' + (critico ? '🚨' : '⚠️') + '</span>' +
+      '<span class="alerta-texto"><strong>' + ing.nombre + '</strong> — quedan ' +
+      '<span class="alerta-stock-val">' + formatStock(ing.stockActual) + ' ' + ing.unidad + '</span>' +
+      (critico ? ' · <em>¡Stock crítico!</em>' : ' (umbral: ' + ing.umbral + ' ' + ing.unidad + ')') +
+      '</span>';
     cont.appendChild(div);
   });
 }
@@ -571,31 +603,31 @@ function renderListaIngredientes() {
     const colorBarra = critico ? 'roja' : enAlerta ? 'amarilla' : '';
 
     const row = document.createElement('div');
-    row.className = `ingrediente-row${critico ? ' critico' : enAlerta ? ' alerta' : ''}`;
+    row.className = 'ingrediente-row' + (critico ? ' critico' : enAlerta ? ' alerta' : '');
 
     const consumosValidos = Object.entries(ing.consumos || {}).filter(([, v]) => v > 0);
     const consumosHtml = consumosValidos.map(([plato, v]) =>
-      `<span class="consumo-chip">${plato}: ${formatStock(v)} ${ing.unidad}</span>`).join('');
+      '<span class="consumo-chip">' + plato + ': ' + formatStock(v) + ' ' + ing.unidad + '</span>').join('');
 
-    row.innerHTML = `
-      <div class="ingrediente-top">
-        <span class="ingrediente-nombre">${ing.nombre} ${enAlerta ? (critico ? '🚨' : '⚠️') : ''}</span>
-        <div class="ingrediente-stock-display">
-          <span class="stock-num">${formatStock(ing.stockActual)}</span>
-          <span class="stock-unidad">${ing.unidad}</span>
-        </div>
-      </div>
-      <div class="stock-barra-wrap"><div class="stock-barra ${colorBarra}" style="width:${pct}%"></div></div>
-      ${consumosValidos.length > 0 ? `<div class="ingrediente-consumos">${consumosHtml}</div>` : ''}
-      <div class="ingrediente-acciones">
-        <button class="btn-ing-edit" data-id="${ing.id}">✏️ Editar</button>
-        <button class="btn-stock-reset" data-id="${ing.id}">↺ Reponer stock</button>
-        <button class="btn-ing-del" data-id="${ing.id}">🗑 Eliminar</button>
-      </div>`;
+    row.innerHTML =
+      '<div class="ingrediente-top">' +
+        '<span class="ingrediente-nombre">' + ing.nombre + ' ' + (enAlerta ? (critico ? '🚨' : '⚠️') : '') + '</span>' +
+        '<div class="ingrediente-stock-display">' +
+          '<span class="stock-num">' + formatStock(ing.stockActual) + '</span>' +
+          '<span class="stock-unidad">' + ing.unidad + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="stock-barra-wrap"><div class="stock-barra ' + colorBarra + '" style="width:' + pct + '%"></div></div>' +
+      (consumosValidos.length > 0 ? '<div class="ingrediente-consumos">' + consumosHtml + '</div>' : '') +
+      '<div class="ingrediente-acciones">' +
+        '<button class="btn-ing-edit" data-id="' + ing.id + '">✏️ Editar</button>' +
+        '<button class="btn-stock-reset" data-id="' + ing.id + '">↺ Reponer stock</button>' +
+        '<button class="btn-ing-del" data-id="' + ing.id + '">🗑 Eliminar</button>' +
+      '</div>';
 
     row.querySelector('.btn-ing-edit').addEventListener('click', () => abrirModalIngrediente(ing.id));
     row.querySelector('.btn-ing-del').addEventListener('click', () => {
-      if (confirm(`¿Eliminar ingrediente "${ing.nombre}"?`)) {
+      if (confirm('¿Eliminar ingrediente "' + ing.nombre + '"?')) {
         state.ingredientes = state.ingredientes.filter(i => i.id !== ing.id);
         guardar(); renderAvisos();
       }
@@ -631,10 +663,10 @@ function renderModalConsumos(consumosActuales) {
     const val = consumosActuales[nombre] !== undefined ? consumosActuales[nombre] : 0;
     const row = document.createElement('div');
     row.className = 'consumo-edit-row';
-    row.innerHTML = `
-      <span class="consumo-edit-nombre">${nombre}</span>
-      <input type="number" class="consumo-edit-input" data-plato="${nombre}" min="0" step="0.25" value="${val}" />
-      <span class="consumo-edit-label">por pedido</span>`;
+    row.innerHTML =
+      '<span class="consumo-edit-nombre">' + nombre + '</span>' +
+      '<input type="number" class="consumo-edit-input" data-plato="' + nombre + '" min="0" step="0.25" value="' + val + '" />' +
+      '<span class="consumo-edit-label">por pedido</span>';
     cont.appendChild(row);
   });
 }
@@ -678,148 +710,88 @@ function descargarPDF() {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const fecha = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const hora = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+  const RED = [139,16,16], GREEN = [45,90,39], DARK = [26,15,15];
+  const LIGHT_RED = [250,235,235], LIGHT_GREEN = [235,245,233], LIGHT_ORANGE = [255,245,230], ORANGE = [184,92,0];
+  const W = 210, MARGIN = 18, COL_W = W - MARGIN * 2;
 
-  const RED = [139, 16, 16];
-  const GREEN = [45, 90, 39];
-  const DARK = [26, 15, 15];
-  const LIGHT_RED = [250, 235, 235];
-  const LIGHT_GREEN = [235, 245, 233];
-  const LIGHT_ORANGE = [255, 245, 230];
-  const ORANGE = [184, 92, 0];
-  const W = 210;
-  const MARGIN = 18;
-  const COL_W = W - MARGIN * 2;
-
-  // Cabecera
   doc.setFillColor(...RED);
   doc.rect(0, 0, W, 32, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(22);
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold'); doc.setFontSize(22);
   doc.text('Comandas · Día de la Cruz', MARGIN, 13);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10);
   doc.text('Granada', MARGIN, 20);
   doc.setFontSize(9);
-  doc.text(`Generado el ${fecha} a las ${hora}`, MARGIN, 27);
+  doc.text('Generado el ' + fecha + ' a las ' + hora, MARGIN, 27);
 
   let y = 42;
-
-  // Resumen pedidos pendientes/listos
   const pendientes = state.cola.filter(x => !x.entregada).length;
   const listos = state.cola.filter(x => x.entregada).length;
-  doc.setFillColor(245, 245, 245);
+  doc.setFillColor(245,245,245);
   doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
-  doc.setTextColor(...DARK);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(9);
-  doc.text(`Pedidos pendientes: ${pendientes}   ·   Entregados: ${listos}   ·   Total comandas: ${state.cola.length}`, MARGIN + 4, y + 9);
+  doc.setTextColor(...DARK); doc.setFont('helvetica','normal'); doc.setFontSize(9);
+  doc.text('Pedidos pendientes: ' + pendientes + '   ·   Entregados: ' + listos + '   ·   Total: ' + state.cola.length, MARGIN+4, y+9);
   y += 20;
 
-  // Secciones y platos
-  ['cocina', 'plancha'].forEach(sec => {
+  ['cocina','plancha'].forEach(sec => {
     const platosGrupo = state.platos.filter(p => p.seccion === sec);
-    if (platosGrupo.length === 0) return;
-
-    // Header sección
+    if (!platosGrupo.length) return;
     const bgSec = sec === 'cocina' ? LIGHT_RED : LIGHT_ORANGE;
     const colorSec = sec === 'cocina' ? RED : ORANGE;
-    doc.setFillColor(...bgSec);
-    doc.roundedRect(MARGIN, y, COL_W, 9, 2, 2, 'F');
-    doc.setTextColor(...colorSec);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text(sec.toUpperCase(), MARGIN + 4, y + 6);
+    doc.setFillColor(...bgSec); doc.roundedRect(MARGIN, y, COL_W, 9, 2, 2, 'F');
+    doc.setTextColor(...colorSec); doc.setFont('helvetica','bold'); doc.setFontSize(9);
+    doc.text(sec.toUpperCase(), MARGIN+4, y+6);
     y += 13;
-
-    // Filas de platos
     platosGrupo.forEach(({ nombre }, idx) => {
+      if (y > 265) { doc.addPage(); y = 20; }
       const count = state.cantidades[nombre] || 0;
-      const rowBg = idx % 2 === 0 ? [255, 255, 255] : [250, 248, 246];
-      doc.setFillColor(...rowBg);
+      doc.setFillColor(...(idx%2===0 ? [255,255,255] : [250,248,246]));
       doc.rect(MARGIN, y, COL_W, 9, 'F');
-      // borde sutil
-      doc.setDrawColor(220, 200, 200);
-      doc.rect(MARGIN, y, COL_W, 9);
-      doc.setTextColor(...DARK);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(nombre, MARGIN + 4, y + 6.3);
-      // Número en rojo
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(...RED);
-      doc.setFontSize(13);
-      doc.text(String(count), MARGIN + COL_W - 12, y + 6.8, { align: 'right' });
+      doc.setDrawColor(220,200,200); doc.rect(MARGIN, y, COL_W, 9);
+      doc.setTextColor(...DARK); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text(nombre, MARGIN+4, y+6.3);
+      doc.setFont('helvetica','bold'); doc.setTextColor(...RED); doc.setFontSize(13);
+      doc.text(String(count), MARGIN+COL_W-12, y+6.8, { align:'right' });
       y += 9;
     });
     y += 6;
   });
 
-  // Línea separadora
-  doc.setDrawColor(...RED);
-  doc.setLineWidth(0.5);
-  doc.line(MARGIN, y, MARGIN + COL_W, y);
-  y += 8;
-
-  // Total general
-  const total = Object.values(state.cantidades).reduce((a, b) => a + b, 0);
-  doc.setFillColor(...LIGHT_RED);
-  doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
-  doc.setTextColor(...RED);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(12);
-  doc.text('TOTAL DEL DÍA', MARGIN + 4, y + 9);
-  doc.setFontSize(16);
-  doc.text(String(total), MARGIN + COL_W - 6, y + 9.5, { align: 'right' });
+  doc.setDrawColor(...RED); doc.setLineWidth(0.5);
+  doc.line(MARGIN, y, MARGIN+COL_W, y); y += 8;
+  const total = Object.values(state.cantidades).reduce((a,b) => a+b, 0);
+  doc.setFillColor(...LIGHT_RED); doc.roundedRect(MARGIN, y, COL_W, 14, 3, 3, 'F');
+  doc.setTextColor(...RED); doc.setFont('helvetica','bold'); doc.setFontSize(12);
+  doc.text('TOTAL DEL DÍA', MARGIN+4, y+9);
+  doc.setFontSize(16); doc.text(String(total), MARGIN+COL_W-6, y+9.5, { align:'right' });
   y += 22;
 
-  // Stock de ingredientes (si hay)
   if (state.ingredientes.length > 0) {
-    doc.setTextColor(...GREEN);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('Estado del stock', MARGIN, y);
-    y += 8;
-
+    if (y > 250) { doc.addPage(); y = 20; }
+    doc.setTextColor(...GREEN); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('Estado del stock', MARGIN, y); y += 8;
     state.ingredientes.forEach(ing => {
       if (y > 265) { doc.addPage(); y = 20; }
       const enAlerta = ing.stockActual <= ing.umbral;
-      const rowBg = enAlerta ? [255, 240, 220] : LIGHT_GREEN;
-      doc.setFillColor(...rowBg);
+      doc.setFillColor(...(enAlerta ? [255,240,220] : LIGHT_GREEN));
       doc.roundedRect(MARGIN, y, COL_W, 10, 2, 2, 'F');
-      doc.setTextColor(...DARK);
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.text(`${ing.nombre}`, MARGIN + 4, y + 7);
-      const stockTxt = `${formatStock(ing.stockActual)} / ${ing.stockInicial} ${ing.unidad}`;
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(enAlerta ? ORANGE[0] : GREEN[0], enAlerta ? ORANGE[1] : GREEN[1], enAlerta ? ORANGE[2] : GREEN[2]);
-      doc.text(stockTxt, MARGIN + COL_W - 4, y + 7, { align: 'right' });
-      if (enAlerta) {
-        doc.setFont('helvetica', 'italic');
-        doc.setFontSize(7);
-        doc.setTextColor(...ORANGE);
-        doc.text('⚠ Stock bajo', MARGIN + COL_W - 4, y + 10.5, { align: 'right' });
-      }
+      doc.setTextColor(...DARK); doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text(ing.nombre, MARGIN+4, y+7);
+      const col = enAlerta ? ORANGE : GREEN;
+      doc.setFont('helvetica','bold'); doc.setTextColor(...col);
+      doc.text(formatStock(ing.stockActual) + ' / ' + ing.stockInicial + ' ' + ing.unidad, MARGIN+COL_W-4, y+7, { align:'right' });
       y += 12;
     });
     y += 4;
   }
 
-  // Pie
   if (y > 265) { doc.addPage(); y = 20; }
-  doc.setDrawColor(200, 200, 200);
-  doc.setLineWidth(0.3);
-  doc.line(MARGIN, y, MARGIN + COL_W, y);
-  y += 5;
-  doc.setTextColor(150, 150, 150);
-  doc.setFont('helvetica', 'italic');
-  doc.setFontSize(8);
-  doc.text('Comandas · Día de la Cruz · Granada', W / 2, y, { align: 'center' });
+  doc.setDrawColor(200,200,200); doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, MARGIN+COL_W, y); y += 5;
+  doc.setTextColor(150,150,150); doc.setFont('helvetica','italic'); doc.setFontSize(8);
+  doc.text('Comandas · Día de la Cruz · Granada', W/2, y, { align:'center' });
 
-  // Nombre de archivo con fecha
-  const fechaArchivo = new Date().toISOString().slice(0, 10);
-  doc.save(`comandas_${fechaArchivo}.pdf`);
+  doc.save('comandas_' + new Date().toISOString().slice(0,10) + '.pdf');
 }
 
 document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDF);
