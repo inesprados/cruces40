@@ -39,8 +39,25 @@ const state = {
       consumos: { 'Tortilla': 1, 'Bocata tortilla': 0.5 }
     },
     {
-      id: 2, nombre: 'Barras de pan', unidad: 'barras',
-      stockInicial: 80, stockActual: 80, umbral: 10,
+      id: 2, nombre: 'Tortillas de patata TICKETS', unidad: 'tortillas',
+      stockInicial: 50, stockActual: 50, umbral: 10,
+      consumos: { 'Tortilla': 1, 'Bocata tortilla': 0.5 }
+    },
+    {
+      id: 3, nombre: 'Barras de pan', unidad: 'barras',
+      stockInicial: 100, stockActual: 100, umbral: 30,
+      consumos: {
+        'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
+        'Bocata jamón': 1, 'Bocata jamón y queso': 1,
+        'Bocata jamón con tomate': 1, 'Bocata atún con tomate': 1,
+        'Bocata queso': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1,
+        'Bocata lomo, queso y pimientos': 1, 'Bocata morcilla': 1,
+        'Bocata longaniza': 1, 'Perrito': 1,
+      }
+    },
+     {
+      id: 4, nombre: 'Bollo aliatar', unidad: 'bollo',
+      stockInicial: 120, stockActual: 120, umbral: 25,
       consumos: {
         'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
         'Bocata jamón': 1, 'Bocata jamón y queso': 1,
@@ -51,27 +68,27 @@ const state = {
       }
     },
     {
-      id: 3, nombre: 'Lomo', unidad: 'raciones',
+      id: 4, nombre: 'Lomo', unidad: 'raciones',
       stockInicial: 40, stockActual: 40, umbral: 6,
       consumos: { 'Lomo': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1, 'Bocata lomo, queso y pimientos': 1 }
     },
     {
-      id: 4, nombre: 'Morcilla', unidad: 'raciones',
-      stockInicial: 30, stockActual: 30, umbral: 5,
+      id: 5, nombre: 'Morcilla', unidad: 'raciones',
+      stockInicial: 15, stockActual: 15, umbral: 5,
       consumos: { 'Morcilla': 1, 'Bocata morcilla': 1 }
     },
     {
-      id: 5, nombre: 'Longaniza', unidad: 'raciones',
+      id: 6, nombre: 'Longaniza', unidad: 'raciones',
       stockInicial: 30, stockActual: 30, umbral: 5,
       consumos: { 'Longaniza': 1, 'Bocata longaniza': 1 }
     },
     {
-      id: 6, nombre: 'Jamón', unidad: 'raciones',
+      id: 7, nombre: 'Jamón', unidad: 'raciones',
       stockInicial: 40, stockActual: 40, umbral: 6,
       consumos: { 'Bocata jamón': 1, 'Bocata jamón y queso': 1, 'Bocata jamón con tomate': 1 }
     },
     {
-      id: 7, nombre: 'Queso', unidad: 'raciones',
+      id: 8, nombre: 'Queso', unidad: 'raciones',
       stockInicial: 35, stockActual: 35, umbral: 5,
       consumos: {
         'Queso': 1, 'Bocata jamón y queso': 0.5, 'Bocata queso': 1,
@@ -79,37 +96,37 @@ const state = {
       }
     },
     {
-      id: 8, nombre: 'Pinchitos', unidad: 'raciones',
+      id: 9, nombre: 'Pinchitos', unidad: 'raciones',
       stockInicial: 60, stockActual: 60, umbral: 8,
       consumos: { 'Pinchito': 1 }
     },
     {
-      id: 9, nombre: 'Arroz', unidad: 'raciones',
+      id: 10, nombre: 'Arroz', unidad: 'raciones',
       stockInicial: 30, stockActual: 30, umbral: 5,
       consumos: { 'Arroz': 1 }
     },
     {
-      id: 10, nombre: 'Carne en salsa', unidad: 'raciones',
+      id: 11, nombre: 'Carne en salsa', unidad: 'raciones',
       stockInicial: 30, stockActual: 30, umbral: 5,
       consumos: { 'Carne en salsa': 1, 'Bocata carne en salsa': 1 }
     },
     {
-      id: 11, nombre: 'Migas', unidad: 'raciones',
+      id: 12, nombre: 'Migas', unidad: 'raciones',
       stockInicial: 25, stockActual: 25, umbral: 4,
       consumos: { 'Migas': 1 }
     },
     {
-      id: 12, nombre: 'Atún', unidad: 'latas',
+      id: 13, nombre: 'Atún', unidad: 'latas',
       stockInicial: 20, stockActual: 20, umbral: 3,
       consumos: { 'Bocata atún con tomate': 1 }
     },
     {
-      id: 13, nombre: 'Perritos (salchichas)', unidad: 'unidades',
+      id: 14, nombre: 'Perritos (salchichas)', unidad: 'unidades',
       stockInicial: 30, stockActual: 30, umbral: 5,
       consumos: { 'Perrito': 1 }
     },
     {
-      id: 14, nombre: 'Pimientos', unidad: 'raciones',
+      id: 15, nombre: 'Pimientos', unidad: 'raciones',
       stockInicial: 20, stockActual: 20, umbral: 4,
       consumos: { 'Pimientos fritos': 1, 'Bocata lomo, queso y pimientos': 0.5 }
     },
