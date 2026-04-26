@@ -45,7 +45,7 @@ const state = {
     },
     {
       id: 3, nombre: 'Barras de pan', unidad: 'barras',
-      stockInicial: 100, stockActual: 100, umbral: 30,
+      stockInicial: 0, stockActual: 0, umbral: 0,
       consumos: {
         'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
         'Bocata jamón': 1, 'Bocata jamón y queso': 1,
