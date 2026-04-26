@@ -57,7 +57,7 @@ const state = {
     },
      {
       id: 4, nombre: 'Bollo aliatar', unidad: 'bollo',
-      stockInicial: 120, stockActual: 120, umbral: 25,
+      stockInicial: 180, stockActual: 180, umbral: 25,
       consumos: {
         'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
         'Bocata jamón': 1, 'Bocata jamón y queso': 1,
@@ -78,7 +78,7 @@ const state = {
       consumos: { 'Morcilla': 1, 'Bocata morcilla': 1 }
     },
     {
-      id: 6, nombre: 'Longaniza', unidad: 'raciones',
+      id: 6, nombre: 'Longaniza fina', unidad: 'raciones',
       stockInicial: 30, stockActual: 30, umbral: 5,
       consumos: { 'Longaniza': 1, 'Bocata longaniza': 1 }
     },
@@ -88,47 +88,25 @@ const state = {
       consumos: { 'Bocata jamón': 1, 'Bocata jamón y queso': 1, 'Bocata jamón con tomate': 1 }
     },
     {
-      id: 8, nombre: 'Queso', unidad: 'raciones',
+      id: 8, nombre: 'Queso semicurao', unidad: 'raciones',
       stockInicial: 35, stockActual: 35, umbral: 5,
       consumos: {
-        'Queso': 1, 'Bocata jamón y queso': 0.5, 'Bocata queso': 1,
-        'Bocata lomo queso': 0.5, 'Bocata lomo, queso y pimientos': 0.5,
-      }
+        'Queso': 1, 'Bocata queso': 5 }
     },
     {
-      id: 9, nombre: 'Pinchitos', unidad: 'raciones',
-      stockInicial: 60, stockActual: 60, umbral: 8,
+      id: 9, nombre: 'Pinchitos', unidad: 'unidad',
+      stockInicial: 200, stockActual: 200, umbral: 120,
       consumos: { 'Pinchito': 1 }
     },
     {
-      id: 10, nombre: 'Arroz', unidad: 'raciones',
-      stockInicial: 30, stockActual: 30, umbral: 5,
-      consumos: { 'Arroz': 1 }
+      id: 10, nombre: 'Pinchitos TICKETS', unidad: 'unidad',
+      stockInicial: 200, stockActual: 200, umbral: 10,
+      consumos: { 'Pinchito': 1 }
     },
     {
-      id: 11, nombre: 'Carne en salsa', unidad: 'raciones',
-      stockInicial: 30, stockActual: 30, umbral: 5,
-      consumos: { 'Carne en salsa': 1, 'Bocata carne en salsa': 1 }
-    },
-    {
-      id: 12, nombre: 'Migas', unidad: 'raciones',
-      stockInicial: 25, stockActual: 25, umbral: 4,
-      consumos: { 'Migas': 1 }
-    },
-    {
-      id: 13, nombre: 'Atún', unidad: 'latas',
-      stockInicial: 20, stockActual: 20, umbral: 3,
-      consumos: { 'Bocata atún con tomate': 1 }
-    },
-    {
-      id: 14, nombre: 'Perritos (salchichas)', unidad: 'unidades',
-      stockInicial: 30, stockActual: 30, umbral: 5,
-      consumos: { 'Perrito': 1 }
-    },
-    {
-      id: 15, nombre: 'Pimientos', unidad: 'raciones',
+      id: 11, nombre: 'Queso en lonchas', unidad: 'raciones',
       stockInicial: 20, stockActual: 20, umbral: 4,
-      consumos: { 'Pimientos fritos': 1, 'Bocata lomo, queso y pimientos': 0.5 }
+      consumos: {  'Bocata jamón y queso': 2, 'Bocata lomo queso': 0.5, 'Bocata lomo, queso y pimientos': 0.5, }
     },
   ],
   _ingEditId: null,
