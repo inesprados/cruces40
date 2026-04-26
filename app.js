@@ -68,43 +68,43 @@ const state = {
       }
     },
     {
-      id: 4, nombre: 'Lomo', unidad: 'raciones',
+      id: 5, nombre: 'Lomo', unidad: 'raciones',
       stockInicial: 40, stockActual: 40, umbral: 6,
       consumos: { 'Lomo': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1, 'Bocata lomo, queso y pimientos': 1 }
     },
     {
-      id: 5, nombre: 'Morcilla', unidad: 'raciones',
+      id: 6, nombre: 'Morcilla', unidad: 'raciones',
       stockInicial: 15, stockActual: 15, umbral: 5,
       consumos: { 'Morcilla': 1, 'Bocata morcilla': 1 }
     },
     {
-      id: 6, nombre: 'Longaniza fina', unidad: 'raciones',
+      id: 7, nombre: 'Longaniza fina', unidad: 'raciones',
       stockInicial: 30, stockActual: 30, umbral: 5,
       consumos: { 'Longaniza': 1, 'Bocata longaniza': 1 }
     },
     {
-      id: 7, nombre: 'Jamón', unidad: 'raciones',
+      id: 8, nombre: 'Jamón', unidad: 'raciones',
       stockInicial: 40, stockActual: 40, umbral: 6,
       consumos: { 'Bocata jamón': 1, 'Bocata jamón y queso': 1, 'Bocata jamón con tomate': 1 }
     },
     {
-      id: 8, nombre: 'Queso semicurao', unidad: 'raciones',
+      id: 9, nombre: 'Queso semicurao', unidad: 'raciones',
       stockInicial: 35, stockActual: 35, umbral: 5,
       consumos: {
         'Queso': 1, 'Bocata queso': 5 }
     },
     {
-      id: 9, nombre: 'Pinchitos', unidad: 'unidad',
+      id: 10, nombre: 'Pinchitos', unidad: 'unidad',
       stockInicial: 200, stockActual: 200, umbral: 120,
       consumos: { 'Pinchito': 1 }
     },
     {
-      id: 10, nombre: 'Pinchitos TICKETS', unidad: 'unidad',
+      id: 11, nombre: 'Pinchitos TICKETS', unidad: 'unidad',
       stockInicial: 200, stockActual: 200, umbral: 10,
       consumos: { 'Pinchito': 1 }
     },
     {
-      id: 11, nombre: 'Queso en lonchas', unidad: 'raciones',
+      id: 12, nombre: 'Queso en lonchas', unidad: 'raciones',
       stockInicial: 20, stockActual: 20, umbral: 4,
       consumos: {  'Bocata jamón y queso': 2, 'Bocata lomo queso': 0.5, 'Bocata lomo, queso y pimientos': 0.5, }
     },
@@ -112,44 +112,31 @@ const state = {
   _ingEditId: null,
 };
 
-/* ── Cookies ── */
-function setCookie(name, value) {
-  const date = new Date();
-  date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000));
-  document.cookie = `${name}=${encodeURIComponent(JSON.stringify(value))}; expires=${date.toUTCString()}; path=/; SameSite=Lax`;
-}
-function getCookie(name) {
-  const nameEQ = name + "=";
-  const ca = document.cookie.split(';');
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i].trim();
-    if (c.indexOf(nameEQ) === 0) {
-      try { return JSON.parse(decodeURIComponent(c.substring(nameEQ.length))); }
-      catch (e) { return null; }
-    }
-  }
-  return null;
-}
+/* ── Persistencia (localStorage) ── */
 function guardar() {
-  setCookie('comandas_cruz_v3', {
-    camareros: state.camareros,
-    platos: state.platos,
-    cola: state.cola,
-    cantidades: state.cantidades,
-    contador: state.contador,
-    ingredientes: state.ingredientes,
-  });
+  try {
+    localStorage.setItem('comandas_cruz_v3', JSON.stringify({
+      camareros: state.camareros,
+      platos: state.platos,
+      cola: state.cola,
+      cantidades: state.cantidades,
+      contador: state.contador,
+      ingredientes: state.ingredientes,
+    }));
+  } catch(e) { console.warn('No se pudo guardar:', e); }
 }
 function cargar() {
-  const datos = getCookie('comandas_cruz_v3');
-  if (datos) {
+  try {
+    const raw = localStorage.getItem('comandas_cruz_v3');
+    if (!raw) return;
+    const datos = JSON.parse(raw);
     if (datos.camareros) state.camareros = datos.camareros;
     if (datos.platos) state.platos = datos.platos;
     if (datos.cola) state.cola = datos.cola;
     if (datos.cantidades) state.cantidades = datos.cantidades;
     if (datos.contador) state.contador = datos.contador;
     if (datos.ingredientes) state.ingredientes = datos.ingredientes;
-  }
+  } catch(e) { console.warn('No se pudo cargar:', e); }
 }
 
 /* ── Swipe to delete ── */
