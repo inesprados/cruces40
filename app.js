@@ -35,7 +35,7 @@ const state = {
   ingredientes: [
     {
       id: 1, nombre: 'Tortillas de patata', unidad: 'tortillas',
-      stockInicial: 50, stockActual: 50, umbral: 8,
+      stockInicial: 50, stockActual: 50, umbral: 25,
       consumos: { 'Tortilla': 1, 'Bocata tortilla': 0.5 }
     },
     {
