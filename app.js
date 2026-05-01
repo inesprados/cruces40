@@ -1,6 +1,6 @@
 /* ── Estado ── */
 const state = {
-  camareros: ['Ana', 'Carlos', 'María', 'Paco', 'Lucía'],
+  camareros: ['Ana', 'Mang', 'Ori', 'Eric', 'Wontolla'],
   platos: [
     { nombre: 'Tortilla', seccion: 'cocina' },
     { nombre: 'Arroz', seccion: 'cocina' },
@@ -12,10 +12,10 @@ const state = {
     { nombre: 'Bocata jamón', seccion: 'cocina' },
     { nombre: 'Bocata jamón y queso', seccion: 'cocina' },
     { nombre: 'Bocata jamón con tomate', seccion: 'cocina' },
+    { nombre: 'Tomate aliñao', seccion: 'cocina' },
     { nombre: 'Bocata atún con tomate', seccion: 'cocina' },
     { nombre: 'Bocata queso', seccion: 'cocina' },
     { nombre: 'Queso', seccion: 'cocina' },
-    { nombre: 'Tomate aliñao', seccion: 'cocina' },
     { nombre: 'Pinchito', seccion: 'plancha' },
     { nombre: 'Longaniza', seccion: 'plancha' },
     { nombre: 'Morcilla', seccion: 'plancha' },
@@ -45,19 +45,19 @@ const state = {
     },
     {
       id: 3, nombre: 'Barras de pan', unidad: 'barras',
-      stockInicial: 0, stockActual: 0, umbral: 0,
+      stockInicial: 0, stockActual: 100, umbral: 20,
       consumos: {
-        'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
-        'Bocata jamón': 1, 'Bocata jamón y queso': 1,
-        'Bocata jamón con tomate': 1, 'Bocata atún con tomate': 1,
-        'Bocata queso': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1,
-        'Bocata lomo, queso y pimientos': 1, 'Bocata morcilla': 1,
-        'Bocata longaniza': 1, 'Perrito': 1,
+        'Bocata tortilla': 0.3, 'Bocata carne en salsa': 0.3,
+        'Bocata jamón': 0.3, 'Bocata jamón y queso': 0.3,
+        'Bocata jamón con tomate': 0.3, 'Bocata atún con tomate': 0.3,
+        'Bocata queso': 0.3, 'Bocata lomo': 0.3, 'Bocata lomo queso': 0.3,
+        'Bocata lomo, queso y pimientos': 0.3, 'Bocata morcilla': 0.3,
+        'Bocata longaniza': 0.3, 'Perrito': 0.3,
       }
     },
      {
       id: 4, nombre: 'Bollo aliatar', unidad: 'bollo',
-      stockInicial: 180, stockActual: 180, umbral: 25,
+      stockInicial: 200, stockActual: 200, umbral: 15,
       consumos: {
         'Bocata tortilla': 1, 'Bocata carne en salsa': 1,
         'Bocata jamón': 1, 'Bocata jamón y queso': 1,
@@ -69,23 +69,23 @@ const state = {
     },
     {
       id: 5, nombre: 'Lomo', unidad: 'raciones',
-      stockInicial: 40, stockActual: 40, umbral: 6,
-      consumos: { 'Lomo': 1, 'Bocata lomo': 1, 'Bocata lomo queso': 1, 'Bocata lomo, queso y pimientos': 1 }
+      stockInicial: 715, stockActual: 715, umbral: 160,
+      consumos: { 'Lomo': 8, 'Bocata lomo': 4, 'Bocata lomo queso': 4, 'Bocata lomo, queso y pimientos': 4 }
     },
     {
       id: 6, nombre: 'Morcilla', unidad: 'raciones',
-      stockInicial: 15, stockActual: 15, umbral: 5,
-      consumos: { 'Morcilla': 1, 'Bocata morcilla': 1 }
+      stockInicial: 50, stockActual: 50, umbral: 15,
+      consumos: { 'Morcilla': 1, 'Bocata morcilla': 0.5 }
     },
     {
       id: 7, nombre: 'Longaniza fina', unidad: 'raciones',
-      stockInicial: 30, stockActual: 30, umbral: 5,
-      consumos: { 'Longaniza': 1, 'Bocata longaniza': 1 }
+      stockInicial: 100, stockActual: 100, umbral: 30,
+      consumos: { 'Longaniza': 1, 'Bocata longaniza': 0.5 }
     },
     {
       id: 8, nombre: 'Jamón', unidad: 'raciones',
-      stockInicial: 40, stockActual: 40, umbral: 6,
-      consumos: { 'Bocata jamón': 1, 'Bocata jamón y queso': 1, 'Bocata jamón con tomate': 1 }
+      stockInicial: , stockActual: 40, umbral: 6,
+      consumos: { 'Bocata jamón': 6, 'Bocata jamón y queso': 6, 'Bocata jamón con tomate': 6 }
     },
     {
       id: 9, nombre: 'Queso semicurao', unidad: 'raciones',
@@ -95,17 +95,17 @@ const state = {
     },
     {
       id: 10, nombre: 'Pinchitos', unidad: 'unidad',
-      stockInicial: 200, stockActual: 200, umbral: 120,
+      stockInicial: 335, stockActual: 335, umbral: 100,
       consumos: { 'Pinchito': 1 }
     },
     {
       id: 11, nombre: 'Pinchitos TICKETS', unidad: 'unidad',
-      stockInicial: 200, stockActual: 200, umbral: 10,
+      stockInicial: 335, stockActual: 335, umbral: 10,
       consumos: { 'Pinchito': 1 }
     },
     {
       id: 12, nombre: 'Queso en lonchas', unidad: 'raciones',
-      stockInicial: 20, stockActual: 20, umbral: 4,
+      stockInicial: 70, stockActual: 70, umbral: 10,
       consumos: {  'Bocata jamón y queso': 2, 'Bocata lomo queso': 0.5, 'Bocata lomo, queso y pimientos': 0.5, }
     },
   ],
