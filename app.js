@@ -84,7 +84,7 @@ const state = {
     },
     {
       id: 8, nombre: 'Jamón', unidad: 'raciones',
-      stockInicial: , stockActual: 40, umbral: 6,
+      stockInicial: 70 , stockActual: 70, umbral: 6,
       consumos: { 'Bocata jamón': 6, 'Bocata jamón y queso': 6, 'Bocata jamón con tomate': 6 }
     },
     {
